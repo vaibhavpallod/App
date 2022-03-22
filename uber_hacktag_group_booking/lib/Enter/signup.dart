@@ -132,14 +132,13 @@ class _SignUpState extends State<SignUp> {
 
   createUser() async {
     try {
-      UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(email: mail, password: password);
+      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(email: mail, password: password);
       String uid = userCredential.user.uid;
       Map<String, dynamic> user;
       var uuid = Uuid();
       var randId = uuid.v1();
       // var uuidStr = uuid.toString().substring(0,8);
-      if (_currentSelectedCustomerType == "Producer") {
+      if (_currentSelectedCustomerType == "User") {
         user = {
           'id':randId.substring(0,8),
           'email': mail,
@@ -148,8 +147,6 @@ class _SignUpState extends State<SignUp> {
           'city': city,
           'lat': lat,
           'long': long,
-          'UnitsProduced': 0,
-          'customerType': _currentSelectedCustomerType,
           'uid':uid,
         };
       } else {
@@ -378,8 +375,8 @@ class _SignUpState extends State<SignUp> {
 
   List<DropdownMenuItem<String>> get dropdownItems {
     List<DropdownMenuItem<String>> menuItems = [
-      DropdownMenuItem(child: Text("Producer"), value: "Producer"),
-      DropdownMenuItem(child: Text("Consumer"), value: "Consumer"),
+      DropdownMenuItem(child: Text("User"), value: "Producer"),
+      DropdownMenuItem(child: Text("Driver"), value: "Consumer"),
       // DropdownMenuItem(child: Text("Brazil"),value: "Brazil"),
       // DropdownMenuItem(child: Text("England"),value: "England"),
     ];
@@ -471,49 +468,6 @@ class _SignUpState extends State<SignUp> {
               //   email = val;
               // });
             },
-          ),
-        ),
-        SizedBox(height: _height / 30.0),
-        Material(
-          borderRadius: BorderRadius.circular(10.0),
-          elevation: _large ? 12 : (_medium ? 10 : 8),
-          child: TextFormField(
-            validator: (val) => val.length < 6
-                ? 'Password must be at least 6 characters long!'
-                : null,
-            onSaved: (val) => password = val,
-            controller: passwordController,
-            keyboardType: TextInputType.text,
-            cursorColor: Color(0xff3e60c1),
-            decoration: InputDecoration(
-                hintStyle: TextStyle(
-                  fontFamily: 'MontserratMed',
-                  color: Colors.blueGrey,
-                  fontWeight: FontWeight.bold,
-                ),
-                prefixIcon:
-                    Icon(Icons.lock, color: Color(0xff3e60c1), size: 20),
-                hintText: "Password",
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30.0),
-                    borderSide: BorderSide.none),
-                suffixIcon: IconButton(
-                  icon: _obscureText
-                      ? Icon(Icons.visibility)
-                      : Icon(Icons.visibility_off),
-                  color: Color(0xff3e60c1),
-                  onPressed: () {
-                    setState(() {
-                      _obscureText = !_obscureText;
-                    });
-                  },
-                )),
-            style: TextStyle(
-              fontFamily: 'MontserratMed',
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
-            ),
-            obscureText: _obscureText,
           ),
         ),
         SizedBox(height: _height / 30.0),

@@ -5,8 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:uber_hacktag_group_booking/Enter/otp.dart';
 import 'package:uber_hacktag_group_booking/Enter/signup.dart';
-
+import 'package:country_code_picker/country_code_picker.dart';
 import '../MainHomePage.dart';
 import '../konstants/ResponsiveWidget.dart';
 import '../konstants/loaders.dart';
@@ -37,26 +38,17 @@ class _LoginState extends State<Login> {
   bool _obscureText = true;
   FirebaseFirestore firestore = FirebaseFirestore.instance;
   CollectionReference users = FirebaseFirestore.instance.collection('users');
-  final storage = FlutterSecureStorage();
-
+  final storage = const FlutterSecureStorage();
+  String countryCode="+91";
   bool ieeeMenber = false;
   double _height, _width, _pixelRatio;
   bool pict = false;
   bool _large,_medium;
   String pictRegID;
   bool load = false;
+  FirebaseAuth auth;
 
-  TextEditingController nameController = TextEditingController();
-  TextEditingController usernameController = TextEditingController();
-  TextEditingController emailController = TextEditingController();
   TextEditingController phoneController = TextEditingController();
-  TextEditingController cityController = TextEditingController();
-  TextEditingController collegeController = TextEditingController();
-  TextEditingController passwordController = TextEditingController();
-  TextEditingController password1Controller = TextEditingController();
-  TextEditingController ieee = TextEditingController();
-  TextEditingController registrationController = TextEditingController();
-  final _dropdownFormKey = GlobalKey<FormState>();
 
   signInWithGoogle() async {
     setState(() {
@@ -148,54 +140,38 @@ class _LoginState extends State<Login> {
   }
 
   login() async {
-    try {
-      print(_mail);
-      print(_password);
-      UserCredential authResult = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(email: "$_mail", password: "$_password");
-      setState(() {
-        load = false;
-      });
-      // Firestore.instance.collection('users').doc(authResult.user.uid);
-      // DocumentSnapshot
-      DocumentReference documentReference = FirebaseFirestore.instance
-          .collection('users')
-          .doc(authResult.user.uid.toString());
-      var userDetails;
-      await documentReference.get().then((value) async => {
-            // value.data()
-            print("documentReference " + value.data().toString()),
-            userDetails = value.data(),
-            print("documentReference" + userDetails['customerType'].toString()),
-            await storage.write(
-                key: 'customerType', value: userDetails['customerType']),
+    auth=FirebaseAuth.instance;
+      await auth.verifyPhoneNumber(
+        phoneNumber:countryCode+phoneController.text,
+        verificationCompleted: (PhoneAuthCredential credential) {
+
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          setState(() {
+            load = false;
           });
-      Fluttertoast.showToast(msg: 'Logged in');
-      Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (BuildContext context) => MainHomePage()),
-          (route) => false);
-    } catch (e) {
-      setState(() {
-        load = false;
-      });
-      if (e.toString().toLowerCase().contains('user_not_found')) {
-        setState(() {
-          load = false;
-        });
-        Fluttertoast.showToast(msg: 'No user found for that email.');
-      } else if (e.toString().toLowerCase().contains('wrong-password')) {
-        setState(() {
-          load = false;
-        });
-        Fluttertoast.showToast(msg: 'Wrong password provided for that user.');
-      } else {
-        setState(() {
-          load = false;
-        });
-        Fluttertoast.showToast(msg: e.toString());
-      }
-    }
+          if (e.toString().toLowerCase().contains('user_not_found')) {
+            setState(() {
+              load = false;
+            });
+            Fluttertoast.showToast(msg: 'No user found for that number');
+          }
+          else {
+            setState(() {
+              load = false;
+            });
+            print(e);
+            Fluttertoast.showToast(msg: e.toString());
+          }
+        },
+        codeSent: (String verificationId, int resendToken) {
+          setState(() {
+            load=false;
+          });
+          Navigator.push(context, MaterialPageRoute(builder: (BuildContext context)=>OTPScreen(verificationId: verificationId,auth: auth,)));
+        },
+        codeAutoRetrievalTimeout: (String verificationId) {},
+      );
   }
 
   // signInWithFacebook()async{
@@ -248,35 +224,27 @@ class _LoginState extends State<Login> {
       body: load == true
           ? Container(child: spinkit)
           : SafeArea(
-              child: CustomPaint(
-                size: Size.fromHeight(MediaQuery.of(context).size.height),
-                painter: BackgroundSignIn(),
-                child: Padding(
-                  padding: const EdgeInsets.all(36.0),
-                  child: Form(
-                    key: _formKey,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 15),
+                child: Form(
+                  key: _formKey,
+                  child: Center(
                     child: ListView(
+                      shrinkWrap: true,
                       // crossAxisAlignment: CrossAxisAlignment.center,
                       // mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
-                        SizedBox(
-                          height: SizeConfig.screenHeight / 10, // 6
-                          // child: Image.asset(
-                          //   "images/login.png",
-                          //   fit: BoxFit.contain,
-                          // ),
-                        ),
                         Column(
                           children: [
-                            SizedBox(height: 40.0),
+                            const SizedBox(height: 40.0),
                             Container(
                               height: 100,
                               width: 100,
-                              decoration: BoxDecoration(
+                              decoration: const BoxDecoration(
                                 borderRadius: BorderRadius.all(Radius.circular(50.0)),
                                 color: Colors.black
                               ),
-                              padding: EdgeInsets.all(15.0),
+                              padding: const EdgeInsets.all(15.0),
                               child: Image.asset(
                                 "images/uberlogo.jpg",
                                 fit: BoxFit.fitWidth,
@@ -284,102 +252,78 @@ class _LoginState extends State<Login> {
                                 height: 80,
                               ),
                             ),
-                            SizedBox(height: 30.0),
-
-                            Material(
-                              borderRadius: BorderRadius.circular(25.0),
-                              elevation: _large ? 12 : (_medium ? 10 : 8),
-                              child: TextFormField(
-                                onSaved: (val) {
-                                  setState(() {
-                                    _mail = val;
-                                  });
-                                },
-                                controller: emailController,
-                                keyboardType: TextInputType.emailAddress,
-                                cursorColor: Color(0xff3e60c1),
-                                decoration: InputDecoration(
-                                  prefixIcon: Icon(Icons.email,
-                                      color: Color(0xff3e60c1), size: 20),
-                                  hintText: "Email",
-                                  hintStyle: TextStyle(
-                                      fontFamily: 'MontserratMed',
-                                      color: Colors.blueGrey),
-                                  border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(30.0),
-                                      borderSide: BorderSide.none),
+                            const SizedBox(height: 30.0),
+                            Row(
+                              children: [
+                                Container(
+                                  child:  CountryCodePicker(
+                                    onChanged: (val){
+                                      print(val);
+                                      setState(() {
+                                        countryCode=val.code;
+                                      });
+                                    },
+                                    // Initial selection and favorite can be one of code ('IT') OR dial_code('+39')
+                                    initialSelection: 'IN',
+                                    favorite: ['+91','IN'],
+                                    // optional. Shows only country name and flag
+                                    showCountryOnly: false,
+                                    // optional. Shows only country name and flag when popup is closed.
+                                    showOnlyCountryWhenClosed: false,
+                                    showFlag: true,
+                                    // optional. aligns the flag and the Text left
+                                    alignLeft: false,
+                                  ),
                                 ),
-                                style: TextStyle(
-                                    fontFamily: 'MontserratMed',
-                                    color: Colors.black),
-                                onChanged: (val) {
-                                  // setState(() {
-                                  //   email = val;
-                                  // });
-                                },
-                              ),
-                            ),
-                            SizedBox(height: 25.0),
-
-                            Material(
-                              borderRadius: BorderRadius.circular(25.0),
-                              elevation: _large ? 12 : (_medium ? 10 : 8),
-                              child: TextFormField(
-                                onSaved: (val) {
-                                  setState(() {
-                                    _password = val;
-                                  });
-                                },
-                                controller: passwordController,
-                                keyboardType: TextInputType.text,
-                                cursorColor: Color(0xff3e60c1),
-                                style: TextStyle(
-                                    fontFamily: 'MontserratMed',
-                                    color: Colors.black),
-                                decoration: InputDecoration(
-                                    hintStyle: TextStyle(
-                                        fontFamily: 'MontserratMed',
-                                        color: Colors.blueGrey),
-                                    prefixIcon: Icon(Icons.lock,
-                                        color: Color(0xff3e60c1), size: 20),
-                                    hintText: "Password",
-                                    border: OutlineInputBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(30.0),
-                                        borderSide: BorderSide.none),
-                                    suffixIcon: IconButton(
-                                      onPressed: () {
+                                Expanded(
+                                  child: Material(
+                                    borderRadius: BorderRadius.circular(25.0),
+                                    elevation: _large ? 12 : (_medium ? 10 : 8),
+                                    child: TextFormField(
+                                      onSaved: (val) {
                                         setState(() {
-                                          _obscureText = !_obscureText;
+                                          _mail = val;
                                         });
                                       },
-                                      icon: _obscureText
-                                          ? Icon(Icons.visibility)
-                                          : Icon(Icons.visibility_off),
-                                      color: Color(0xff3e60c1),
-                                    )),
-                                onChanged: (val) {
-                                  // setState(() {
-                                  //   password = val;
-                                  // });
-                                },
-                                obscureText: _obscureText,
-                              ),
+                                      controller: phoneController,
+                                      keyboardType: TextInputType.phone,
+                                      cursorColor: const Color(0xff3e60c1),
+                                      decoration: InputDecoration(
+                                        hintText: "Phone Number",
+                                        hintStyle: const TextStyle(
+                                            fontFamily: 'MontserratMed',
+                                            color: Colors.blueGrey),
+                                        border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(30.0),
+                                            borderSide: BorderSide.none),
+                                      ),
+                                      style: const TextStyle(
+                                          fontFamily: 'MontserratMed',
+                                          color: Colors.black),
+                                      onChanged: (val) {
+                                        // setState(() {
+                                        //   email = val;
+                                        // });
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                             SizedBox(height: _height / 30.0),
 
-                            SizedBox(
+                            const SizedBox(
                               height: 35.0,
                             ),
                             Material(
                               elevation: 5.0,
                               borderRadius: BorderRadius.circular(30.0),
-                              color: Color(0xff2e4583),
+                              color: const Color(0xff2e4583),
                               child: MaterialButton(
                                 minWidth:
                                     MediaQuery.of(context).size.width * 0.6,
                                 padding:
-                                    EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 15.0),
+                                    const EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 15.0),
                                 onPressed: () async {
                                   if (_formKey.currentState.validate()) {
                                     _formKey.currentState.save();
@@ -389,7 +333,7 @@ class _LoginState extends State<Login> {
                                     await login();
                                   }
                                 },
-                                child: Text(
+                                child: const Text(
                                   "Login",
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
@@ -399,12 +343,12 @@ class _LoginState extends State<Login> {
                                 ),
                               ),
                             ),
-                            SizedBox(
+                            const SizedBox(
                               height: 15.0,
                             ),
                             _getBottomRow(context),
 
-                            SizedBox(
+                            const SizedBox(
                               height: 30.0,
                             ),
 
@@ -550,7 +494,7 @@ class _LoginState extends State<Login> {
             ),
           ),
         ),
-        Text(
+        const Text(
           '',
           style: TextStyle(
             fontSize: 15,
