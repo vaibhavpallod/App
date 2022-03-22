@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "1005141929986",
+    "firebase_url": "https://uber-hacktag-group-booking-default-rtdb.firebaseio.com",
+    "project_id": "uber-hacktag-group-booking",
+    "storage_bucket": "uber-hacktag-group-booking.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1005141929986:android:7797a141114cd5239f371b",
+        "android_client_info": {
+          "package_name": "com.uber.hacktag.uber_hacktag_group_booking"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1005141929986-0a55lh0gtbd145c5iotaag2pft84kgua.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBhHztqk9KrXBwstxCPJ4WY_Nphv7-O-ik"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1005141929986-0a55lh0gtbd145c5iotaag2pft84kgua.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
