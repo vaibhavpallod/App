@@ -2,9 +2,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../Enter/login.dart';
-import '../Enter/signup.dart';
-import '../konstants/Constansts.dart';
+import '../../konstants/Constansts.dart';
+import '../login.dart';
+import '../signup.dart';
 import 'StepModel.dart';
 
 class IntroPage extends StatefulWidget {

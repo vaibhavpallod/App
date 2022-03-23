@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:uber_hacktag_group_booking/Enter/UserDashboard.dart';
-import 'package:uber_hacktag_group_booking/MainHomePage.dart';
+import 'package:uber_hacktag_group_booking/pages/MainHomePage.dart';
 import '../konstants/loaders.dart';
 
 class OTPScreen extends StatefulWidget {

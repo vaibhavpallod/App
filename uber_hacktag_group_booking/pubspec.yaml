@@ -68,6 +68,7 @@ dependencies:
   firebase_storage: ^10.2.5
   numberpicker: ^2.1.1
   slider_button: ^2.0.0
+  toggle_switch: ^1.4.0
 
 
 dev_dependencies:

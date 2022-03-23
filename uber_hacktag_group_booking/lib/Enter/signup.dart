@@ -10,7 +10,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:uuid/uuid.dart';
 
-import '../MainHomePage.dart';
+import '../pages/MainHomePage.dart';
 import '../konstants/ResponsiveWidget.dart';
 import '../konstants/functions.dart';
 import '../konstants/loaders.dart';

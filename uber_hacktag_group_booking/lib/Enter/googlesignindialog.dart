@@ -6,7 +6,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:location/location.dart';
-import 'package:uber_hacktag_group_booking/MainHomePage.dart';
+import 'package:uber_hacktag_group_booking/pages/MainHomePage.dart';
 
 import '../konstants/ResponsiveWidget.dart';
 import '../konstants/functions.dart';

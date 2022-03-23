@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:toggle_switch/toggle_switch.dart';
 import 'package:uber_hacktag_group_booking/konstants/loaders.dart';
 import 'package:location/location.dart';
 import 'package:numberpicker/numberpicker.dart';
 import 'package:slider_button/slider_button.dart';
+import 'package:uber_hacktag_group_booking/pages/BookingFormScreen.dart';
 
 class MainHomePage extends StatefulWidget {
   @override
@@ -23,6 +25,7 @@ class _MainHomePageState extends State<MainHomePage> {
   int noc=2;
   bool load=true;
   LocationData location;
+  bool whichSame=true;
   @override
   void initState() {
     // TODO: implement initState
@@ -74,19 +77,20 @@ class _MainHomePageState extends State<MainHomePage> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20,vertical: 8),
                 child: Material(
-                  elevation: 10,
+                  elevation: 15,
                   borderRadius: BorderRadius.all(Radius.circular(10)),
                   child: Container(
                     decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey,width: 1),
                       gradient: LinearGradient(
                         colors: [
                           Color(0x99000000),
                           Color(0xFF000000)
                         ]
                       ),
-                      borderRadius: BorderRadius.all(Radius.circular(10)),
+                      borderRadius: BorderRadius.all(Radius.circular(20)),
                     ),
-                    height: 160,
+                    height: 200,
                     width: MediaQuery.of(context).size.width,
                     child: Column(
                       children: [
@@ -124,7 +128,33 @@ class _MainHomePageState extends State<MainHomePage> {
                             )
                           ],
                         ),
-                        SizedBox(height: 5,),
+                        Row(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              child: Text('Same',style: GoogleFonts.workSans(color: Colors.white,fontSize: 14,fontWeight: FontWeight.w300),),
+                            ),
+                            Spacer(),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              child: ToggleSwitch(totalSwitches: 2,
+                              initialLabelIndex: 0,
+                              labels: [
+                                'Origin',
+                                'End'
+                              ],
+                                minHeight: 30,
+                                onToggle: (index){
+                                },
+                                inactiveBgColor: Colors.white,
+                                customTextStyles: [
+                                  GoogleFonts.workSans(color: Colors.black,fontSize: 14,fontWeight: FontWeight.w300),
+                                  GoogleFonts.workSans(color: Colors.black,fontSize: 14,fontWeight: FontWeight.w400),
+                                ],
+                              ),
+                            )
+                          ],
+                        ),
                         // Expanded(
                         //   child: Container(
                         //     decoration: BoxDecoration(
@@ -143,12 +173,13 @@ class _MainHomePageState extends State<MainHomePage> {
                         //     ),
                         //   ),
                         // )
+                        SizedBox(height: 5,),
                         Expanded(
                             child:Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: SliderButton(
                                 action: (){
-
+                                  Navigator.push(context, MaterialPageRoute(builder: (BuildContext context)=>BookingForm(cabsCount: noc,)));
                                 },
                                 icon: Center(
                                   child: Icon(
