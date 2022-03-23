@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:uuid/uuid.dart';
@@ -21,29 +22,24 @@ class SignUp extends StatefulWidget {
 
 class _SignUpState extends State<SignUp> {
   final _formKey = GlobalKey<FormState>();
-  String mail, password, password1, name, phoneNumber;
+  String mail, password, password1, name, phoneNumber, verificationId;
   bool load = false;
   bool _obscureText = true;
   bool _obscureText1 = true;
   FirebaseFirestore firestore = FirebaseFirestore.instance;
-  CollectionReference users = FirebaseFirestore.instance.collection('users');
+  CollectionReference alluserscol =
+      FirebaseFirestore.instance.collection('allusers');
   CollectionReference producers =
-      FirebaseFirestore.instance.collection('producers');
-  CollectionReference consumers =
-      FirebaseFirestore.instance.collection('consumers');
+      FirebaseFirestore.instance.collection('driver');
+  CollectionReference userscol = FirebaseFirestore.instance.collection('user');
 
   TextEditingController nameController = TextEditingController();
-  TextEditingController usernameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
   TextEditingController phoneController = TextEditingController();
   TextEditingController cityController = TextEditingController();
-  TextEditingController collegeController = TextEditingController();
-  TextEditingController passwordController = TextEditingController();
-  TextEditingController password1Controller = TextEditingController();
-  TextEditingController ieee = TextEditingController();
-  TextEditingController registrationController = TextEditingController();
+  TextEditingController otpCode = TextEditingController();
   final _dropdownFormKey = GlobalKey<FormState>();
-  final storage = FlutterSecureStorage();
+  final storage = const FlutterSecureStorage();
 
   double _height;
   double _width;
@@ -56,6 +52,11 @@ class _SignUpState extends State<SignUp> {
   String pictRegID;
   String city;
   String _currentSelectedCustomerType;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  OutlineInputBorder border = const OutlineInputBorder(
+      borderSide: BorderSide(color: Colors.grey, width: 3.0));
+
+  String smsCode = null;
 
   void toggle() {
     setState(() {
@@ -80,7 +81,7 @@ class _SignUpState extends State<SignUp> {
       }
 
       permission = await Geolocator.checkPermission();
-      print(permission);
+      // print(permission);
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.deniedForever) {
@@ -98,23 +99,23 @@ class _SignUpState extends State<SignUp> {
           return Future.error('Location permissions are denied');
         }
       }
-      print('1');
+      // print('1');
       Position position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.best);
-      print('1');
+      // print('1');
       // final coordinates =
       //     new Coordinates(position.latitude,position.longitude);//Coordinates(position.latitude, position.longitude);
-      print(position.latitude);
+      // print(position.latitude);
       var addresses = await placemarkFromCoordinates(
           position.latitude,
           position
               .longitude); //Geocoder.local.findAddressesFromCoordinates(coordinates);
-      print(position.latitude);
-      print(addresses);
+      // print(position.latitude);
+      // print(addresses);
       var first = addresses.first;
       // addresses.first.administrativeArea
-      print(
-          ' ${first.locality}, ${first.administrativeArea},${first.subLocality}, ${first.subAdministrativeArea},${first.street}, ${first.name},${first.thoroughfare}, ${first.subThoroughfare}');
+      // print(
+      //     ' ${first.locality}, ${first.administrativeArea},${first.subLocality}, ${first.subAdministrativeArea},${first.street}, ${first.name},${first.thoroughfare}, ${first.subThoroughfare}');
       setState(() {
         city = addresses.first.locality;
         cityController.text = city;
@@ -132,46 +133,42 @@ class _SignUpState extends State<SignUp> {
 
   createUser() async {
     try {
-      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(email: mail, password: password);
+      print("SIGNUP: Creating user and storing it in firestore");
+      UserCredential userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: mail, password: password);
       String uid = userCredential.user.uid;
       Map<String, dynamic> user;
-      var uuid = Uuid();
+      var uuid = const Uuid();
       var randId = uuid.v1();
       // var uuidStr = uuid.toString().substring(0,8);
       if (_currentSelectedCustomerType == "User") {
         user = {
-          'id':randId.substring(0,8),
+          'id': randId.substring(0, 8),
           'email': mail,
           'name': name,
           'phone': phoneNumber,
           'city': city,
-          'lat': lat,
-          'long': long,
-          'uid':uid,
+          'uid': uid,
         };
       } else {
         user = {
-          'id':randId.substring(0,8),
+          'id': randId.substring(0, 8),
           'email': mail,
           'name': name,
           'phone': phoneNumber,
           'city': city,
-          'lat': lat,
-          'long': long,
-          'UnitsConsumed': 0,
-          'customerType': _currentSelectedCustomerType,
-          'uid':uid,
+          'uid': uid,
         };
       }
       print(user);
-      users
+      alluserscol
           .doc(uid)
           .set(user)
           .then((value) => {
-                if (_currentSelectedCustomerType == "Producer")
+                if (_currentSelectedCustomerType == "driver")
                   {producers.doc(uid).set(user)}
                 else
-                  {consumers.doc(uid).set(user)}
+                  {userscol.doc(uid).set(user)}
               })
           .whenComplete(() async => {
                 setState(() {
@@ -183,7 +180,8 @@ class _SignUpState extends State<SignUp> {
                     MaterialPageRoute(
                         builder: (BuildContext context) => MainHomePage()),
                     (route) => false),
-                await storage.write(key: 'customerType', value: _currentSelectedCustomerType),
+                await storage.write(
+                    key: 'customerType', value: _currentSelectedCustomerType),
               })
           .catchError((onError) {
         setState(() {
@@ -292,7 +290,7 @@ class _SignUpState extends State<SignUp> {
   }
 
   _getBackBtn() {
-    return Positioned(
+    return const Positioned(
       top: 35,
       left: 25,
       child: Icon(
@@ -310,7 +308,7 @@ class _SignUpState extends State<SignUp> {
           onTap: () {
             Navigator.pop(context);
           },
-          child: Text(
+          child: const Text(
             'Already a user Sign in here',
             style: TextStyle(
               color: Colors.white,
@@ -320,7 +318,7 @@ class _SignUpState extends State<SignUp> {
             ),
           ),
         ),
-        Text(
+        const Text(
           '',
           style: TextStyle(
             fontSize: 15,
@@ -336,7 +334,7 @@ class _SignUpState extends State<SignUp> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: <Widget>[
-        Text(
+        const Text(
           'Sign up',
           style: TextStyle(
             color: Colors.white,
@@ -352,7 +350,15 @@ class _SignUpState extends State<SignUp> {
               setState(() {
                 load = true;
               });
-              await createUser();
+              // FirebaseService service = new FirebaseService();
+              if (_formKey.currentState.validate()) {
+                setState(() {
+                  load = true;
+                });
+                await _verifyOTP(verificationId, smsCode);
+                // await phoneSignIn(phoneNumber.toString());
+              }
+              // await createUser();
             }
           },
           child: Padding(
@@ -360,7 +366,7 @@ class _SignUpState extends State<SignUp> {
             child: CircleAvatar(
               backgroundColor: Colors.grey.shade800,
               radius: 25,
-              child: Icon(
+              child: const Icon(
                 Icons.arrow_forward,
                 color: Colors.white,
               ),
@@ -375,8 +381,8 @@ class _SignUpState extends State<SignUp> {
 
   List<DropdownMenuItem<String>> get dropdownItems {
     List<DropdownMenuItem<String>> menuItems = [
-      DropdownMenuItem(child: Text("User"), value: "Producer"),
-      DropdownMenuItem(child: Text("Driver"), value: "Consumer"),
+      const DropdownMenuItem(child: Text("User"), value: "Producer"),
+      const DropdownMenuItem(child: Text("Driver"), value: "Consumer"),
       // DropdownMenuItem(child: Text("Brazil"),value: "Brazil"),
       // DropdownMenuItem(child: Text("England"),value: "England"),
     ];
@@ -387,7 +393,7 @@ class _SignUpState extends State<SignUp> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       children: <Widget>[
-        SizedBox(
+        const SizedBox(
           height: 15,
         ),
         Material(
@@ -403,17 +409,17 @@ class _SignUpState extends State<SignUp> {
             },
             onSaved: (val) => name = val,
             keyboardType: TextInputType.text,
-            cursorColor: Color(0xff3e60c1),
-            style: TextStyle(
+            cursorColor: const Color(0xff3e60c1),
+            style: const TextStyle(
               fontFamily: 'MontserratMed',
               color: Colors.black,
               fontWeight: FontWeight.bold,
             ),
             decoration: InputDecoration(
               prefixIcon:
-                  Icon(Icons.person, color: Color(0xff3e60c1), size: 20),
+                  const Icon(Icons.person, color: Color(0xff3e60c1), size: 20),
               hintText: "Name",
-              hintStyle: TextStyle(
+              hintStyle: const TextStyle(
                 fontFamily: 'MontserratMed',
                 color: Colors.blueGrey,
                 fontWeight: FontWeight.bold,
@@ -445,19 +451,20 @@ class _SignUpState extends State<SignUp> {
             onSaved: (val) => mail = val,
             controller: emailController,
             keyboardType: TextInputType.emailAddress,
-            cursorColor: Color(0xff3e60c1),
-            style: TextStyle(
+            cursorColor: const Color(0xff3e60c1),
+            style: const TextStyle(
               fontFamily: 'MontserratMed',
               color: Colors.black,
               fontWeight: FontWeight.bold,
             ),
             decoration: InputDecoration(
-              hintStyle: TextStyle(
+              hintStyle: const TextStyle(
                 fontFamily: 'MontserratMed',
                 color: Colors.blueGrey,
                 fontWeight: FontWeight.bold,
               ),
-              prefixIcon: Icon(Icons.email, color: Color(0xff3e60c1), size: 20),
+              prefixIcon:
+                  const Icon(Icons.email, color: Color(0xff3e60c1), size: 20),
               hintText: "Email",
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30.0),
@@ -483,17 +490,18 @@ class _SignUpState extends State<SignUp> {
               }
               return null;
             },
-            onSaved: (val) => phoneNumber = val,
+            // onSaved: (val) => phoneNumber = val,
             controller: phoneController,
             keyboardType: TextInputType.phone,
-            cursorColor: Color(0xff3e60c1),
+            cursorColor: const Color(0xff3e60c1),
             decoration: InputDecoration(
-              hintStyle: TextStyle(
+              hintStyle: const TextStyle(
                 fontFamily: 'MontserratMed',
                 color: Colors.blueGrey,
                 fontWeight: FontWeight.bold,
               ),
-              prefixIcon: Icon(Icons.phone, color: Color(0xff3e60c1), size: 20),
+              prefixIcon:
+                  const Icon(Icons.phone, color: Color(0xff3e60c1), size: 20),
               hintText: "Phone Number",
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30.0),
@@ -501,15 +509,70 @@ class _SignUpState extends State<SignUp> {
             ),
             onChanged: (val) {
               // setState(() {
-              //   phoneNumber = val;
+              //   print('SIGNUP: onchanged'+ val);
+              phoneNumber = val;
               // });
             },
-            style: TextStyle(
+            style: const TextStyle(
               fontFamily: 'MontserratMed',
               color: Colors.black,
               fontWeight: FontWeight.bold,
             ),
           ),
+        ),
+        SizedBox(height: _height / 30.0),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ElevatedButton(
+                onPressed: () => {
+                  phoneSignIn(phoneNumber.toString()),
+                },
+                style: ButtonStyle(
+                  elevation: MaterialStateProperty.all(10.0),
+                  backgroundColor: MaterialStateProperty.all(Colors.white),
+                  padding: MaterialStateProperty.all(
+                      EdgeInsets.symmetric(horizontal: 10.0)),
+                ),
+                child: Text('Get OTP'),
+              ),
+            ),
+            Expanded(
+              child: Material(
+                borderRadius: BorderRadius.circular(10.0),
+                elevation: _large ? 12 : (_medium ? 10 : 8),
+                child: TextFormField(
+                  keyboardType: TextInputType.number,
+                  controller: otpCode,
+                  obscureText: true,
+                  cursorColor: const Color(0xff3e60c1),
+                  decoration: InputDecoration(
+                    hintStyle: const TextStyle(
+                      fontFamily: 'MontserratMed',
+                      color: Colors.blueGrey,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    prefixIcon: const Icon(FontAwesomeIcons.key,
+                        color: Color(0xff3e60c1), size: 18),
+                    hintText: "Enter OTP",
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30.0),
+                        borderSide: BorderSide.none),
+                  ),
+                  onChanged: (val) {
+                    smsCode = val;
+                  },
+                  style: const TextStyle(
+                    fontFamily: 'MontserratMed',
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
         SizedBox(height: _height / 30.0),
         Material(
@@ -519,7 +582,7 @@ class _SignUpState extends State<SignUp> {
             key: _dropdownFormKey,
             validator: (value) =>
                 value == null ? "Please select your Customer type" : null,
-            hint: Text(
+            hint: const Text(
               'Customer Type',
               style: TextStyle(
                 fontFamily: 'MontserratMed',
@@ -527,7 +590,7 @@ class _SignUpState extends State<SignUp> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            style: TextStyle(
+            style: const TextStyle(
               fontFamily: 'MontserratMed',
               color: Colors.black,
               fontWeight: FontWeight.bold,
@@ -535,12 +598,12 @@ class _SignUpState extends State<SignUp> {
             decoration: InputDecoration(
               // focusColor: white,
 
-              hintStyle: TextStyle(
+              hintStyle: const TextStyle(
                 fontFamily: 'MontserratMed',
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
-              prefixIcon: Icon(Icons.people_rounded,
+              prefixIcon: const Icon(Icons.people_rounded,
                   color: Color(0xff3e60c1), size: 20),
               hintText: "Customer Type",
               border: OutlineInputBorder(
@@ -571,22 +634,22 @@ class _SignUpState extends State<SignUp> {
             onSaved: (val) => city = val,
             controller: cityController,
             keyboardType: TextInputType.phone,
-            cursorColor: Color(0xff3e60c1),
+            cursorColor: const Color(0xff3e60c1),
             decoration: InputDecoration(
-              hintStyle: TextStyle(
+              hintStyle: const TextStyle(
                 fontFamily: 'MontserratMed',
                 color: Colors.blueGrey,
                 fontWeight: FontWeight.bold,
               ),
-              prefixIcon:
-                  Icon(Icons.location_city, color: Color(0xff3e60c1), size: 20),
+              prefixIcon: const Icon(Icons.location_city,
+                  color: Color(0xff3e60c1), size: 20),
               hintText: "City",
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30.0),
                   borderSide: BorderSide.none),
             ),
             readOnly: true,
-            style: TextStyle(
+            style: const TextStyle(
               fontFamily: 'MontserratMed',
               color: Colors.black,
               fontWeight: FontWeight.bold,
@@ -602,9 +665,9 @@ class _SignUpState extends State<SignUp> {
 
   _getHeader() {
     return Container(
-      margin: EdgeInsets.only(top: 50),
+      margin: const EdgeInsets.only(top: 50),
       alignment: Alignment.bottomLeft,
-      child: Text(
+      child: const Text(
         'Create\nAccount',
         style: TextStyle(
           color: Colors.white,
@@ -614,6 +677,115 @@ class _SignUpState extends State<SignUp> {
         textAlign: TextAlign.center,
       ),
     );
+  }
+
+  Future<void> phoneSignIn(String phoneNumber) async {
+    // await _auth.phone
+    print("SIGNUP: " + '+91 ' + phoneNumber.toString());
+    await _auth.verifyPhoneNumber(
+        phoneNumber: '+91' + phoneNumber,
+        verificationCompleted: _onVerificationCompleted,
+        verificationFailed: _onVerificationFailed,
+        codeSent: _onCodeSent,
+        codeAutoRetrievalTimeout: _onCodeTimeout);
+  }
+
+  _onVerificationCompleted(PhoneAuthCredential authCredential) async {
+    print("SIGNUP: verification completed ${authCredential.smsCode}");
+    User user = FirebaseAuth.instance.currentUser;
+    setState(() {
+      this.otpCode.text = authCredential.smsCode;
+    });
+    if (authCredential.smsCode != null) {
+      try {
+        UserCredential credential =
+            await user.linkWithCredential(authCredential);
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'provider-already-linked') {
+          await _auth.signInWithCredential(authCredential);
+        }
+      }
+      setState(() {
+        load = false;
+      });
+      showMessage("Login Successful");
+      // Navigator.pushNamedAndRemoveUntil(
+      //     context, HomePage(), (route) => false);
+    }
+  }
+
+  _onVerificationFailed(FirebaseAuthException exception) {
+    if (exception.code == 'invalid-phone-number') {
+      print("SIGNUP: +91"+ phoneNumber);
+      showMessage("The phone number entered is invalid!");
+    }
+  }
+
+  _onCodeSent(String verificationId, int forceResendingToken) async {
+    print("SIGNUP:" + "code sent " + verificationId);
+    this.verificationId = verificationId;
+    print(forceResendingToken);
+  }
+
+  _onCodeTimeout(String timeout) {
+    return null;
+  }
+
+  _verifyOTP(String verificationId, String smsCode) async {
+    print("SIGNUP: verify" + smsCode);
+    PhoneAuthCredential credential = PhoneAuthProvider.credential(
+        verificationId: verificationId, smsCode: smsCode);
+    var result;
+
+    try {
+      result = await _auth.signInWithCredential(credential);
+    } catch (e) {
+      load = false;
+      print("SIGNUP: verify" + "failure message: " + e.toString());
+
+      showMessage("Invalid Credentials");
+      // throw e;
+      return false;
+    }
+    print("SIGNUP: verify" + "success");
+
+    setState(() {
+      load = false;
+    });
+
+    Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (BuildContext context) => MainHomePage()),
+        (route) => false);
+  }
+
+  void showMessage(String errorMessage) {
+    showDialog(
+        context: context,
+        builder: (BuildContext builderContext) {
+          return AlertDialog(
+            title: Text("Error"),
+            content: Text(
+              errorMessage,
+              style: TextStyle(color: Colors.black),
+            ),
+            actions: [
+              TextButton(
+                child: Text(
+                  "Ok",
+                  style: TextStyle(color: Colors.red),
+                ),
+                onPressed: () async {
+                  Navigator.of(builderContext).pop();
+                },
+              )
+            ],
+          );
+        }).then((value) {
+      setState(() {
+        load = false;
+      });
+    });
   }
 }
 
@@ -653,7 +825,7 @@ class BackgroundSignIn extends CustomPainter {
         sw * 0.6, sh * 0.05, sw * 0.27, sh * 0.01, sw * 0.18, sh * 0.12);
     yellowWave.quadraticBezierTo(sw * 0.12, sh * 0.2, 0, sh * 0.2);
     yellowWave.close();
-    paint.color = Color(0xff3e60c1);
+    paint.color = const Color(0xff3e60c1);
     canvas.drawPath(yellowWave, paint);
 
     Path yellowWaveBottom = Path();
@@ -663,7 +835,7 @@ class BackgroundSignIn extends CustomPainter {
     yellowWaveBottom.quadraticBezierTo(sw * 0.88, sh * 0.8, sw, sh * 0.8);
     yellowWaveBottom.lineTo(sw, sh);
     yellowWaveBottom.close();
-    paint.color = Color(0xff3e60c1);
+    paint.color = const Color(0xff3e60c1);
     canvas.drawPath(yellowWaveBottom, paint);
   }
 
@@ -682,7 +854,7 @@ class BackgroundSignUp extends CustomPainter {
 
     Path mainBackground = Path();
     mainBackground.addRect(Rect.fromLTRB(0, 0, sw, sh));
-    paint.color = Color(0xff5983fc);
+    paint.color = const Color(0xff5983fc);
     canvas.drawPath(mainBackground, paint);
 
     Path blueWave = Path();
@@ -691,7 +863,7 @@ class BackgroundSignUp extends CustomPainter {
     blueWave.cubicTo(sw * 0.8, sh * 0.8, sw * 0.55, sh * 0.8, sw * 0.45, sh);
     blueWave.lineTo(0, sh);
     blueWave.close();
-    paint.color = Color(0xff3e60c1);
+    paint.color = const Color(0xff3e60c1);
     // paint.color = Colors.orange;
     canvas.drawPath(blueWave, paint);
 
@@ -701,7 +873,7 @@ class BackgroundSignUp extends CustomPainter {
     greyWave.cubicTo(sw * 0.65, sh * 0.45, sw * 0.25, sh * 0.35, 0, sh * 0.5);
     greyWave.close();
     // paint.color = Colors.grey.shade800;
-    paint.color = Color(0xff2e4583);
+    paint.color = const Color(0xff2e4583);
     canvas.drawPath(greyWave, paint);
   }
 

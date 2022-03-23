@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:uber_hacktag_group_booking/Enter/otp.dart';
 import 'package:uber_hacktag_group_booking/Enter/signup.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import '../MainHomePage.dart';
@@ -13,6 +12,7 @@ import '../konstants/ResponsiveWidget.dart';
 import '../konstants/loaders.dart';
 import '../konstants/size_config.dart';
 import 'googlesignindialog.dart';
+import 'otp.dart';
 
 class Login extends StatefulWidget {
   @override

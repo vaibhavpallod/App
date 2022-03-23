@@ -29,12 +29,12 @@ class _IntroPageState extends State<IntroPage> {
       body: SafeArea(
         child: Container(
           decoration: BoxDecoration(
-            image: DecorationImage(
-              fit: BoxFit.fitHeight,
-              image: AssetImage("images/onback.jpg"),
-              colorFilter: new ColorFilter.mode(
-                  Colors.black.withOpacity(0.4), BlendMode.dstOut),
-            ),
+            // image: DecorationImage(
+            //   fit: BoxFit.fitHeight,
+            //   image: AssetImage("images/onback.jpg"),
+            //   colorFilter: new ColorFilter.mode(
+            //       Colors.black.withOpacity(0.4), BlendMode.dstOut),
+            // ),
           ),
           child: Column(
             children: <Widget>[
