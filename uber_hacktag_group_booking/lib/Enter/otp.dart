@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:uber_hacktag_group_booking/Enter/UserDashboard.dart';
+import 'package:uber_hacktag_group_booking/MainHomePage.dart';
 import '../konstants/loaders.dart';
 
 class OTPScreen extends StatefulWidget {
@@ -84,7 +85,7 @@ class _OTPScreenState extends State<OTPScreen> {
           PhoneAuthCredential credential = PhoneAuthProvider.credential(verificationId: widget.verificationId, smsCode: finalCode);
             UserCredential userCredential = await widget.auth
                 .signInWithCredential(credential);
-            Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (BuildContext context)=>UserDashboard()), (route) => false);
+            Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (BuildContext context)=>MainHomePage()), (route) => false);
 
         },
         backgroundColor: Colors.black,
