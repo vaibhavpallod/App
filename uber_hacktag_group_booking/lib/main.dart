@@ -19,11 +19,18 @@ void main() {
 
 class MyApp extends StatelessWidget {
   // const MyApp({Key? key}) : super(key: key);
-   MyApp({Key key}) : super(key: key);
+  MyApp({Key key}) : super(key: key);
 
 
-   // FirebaseDatabase database = FirebaseDatabase.instance;
-   // FirebaseApp secondaryApp = Firebase.app('SecondaryApp');
+  // FirebaseDatabase database = FirebaseDatabase.instance;
+  // FirebaseApp secondaryApp = Firebase.app('SecondaryApp');
+
+
+  // ye line comment ki mene 25 26
+
+
+
+
   // FirebaseDatabase database = FirebaseDatabase.instanceFor(app: secondaryApp);
   // This widget is the root of your application.
   @override
@@ -46,22 +53,33 @@ class App extends StatelessWidget {
   Future initialise(BuildContext context) async {
     print('initializing');
     await Firebase.initializeApp();
-    CollectionReference userCol =
-        FirebaseFirestore.instance.collection('allusers');
+    // CollectionReference userCol =
+    //     FirebaseFirestore.instance.collection('allusers');
+    DatabaseReference allUsersDatabaseReference =
+    FirebaseDatabase.instance.ref().child('allusers');
+
+
     if (FirebaseAuth.instance.currentUser != null) {
       print('MAIN: current user id' + FirebaseAuth.instance.currentUser.uid);
-      DocumentSnapshot ds =
-          await userCol.doc(FirebaseAuth.instance.currentUser.uid).get();
-      if (!ds.exists) {
+      // DocumentSnapshot ds =
+      //     await userCol.doc(FirebaseAuth.instance.currentUser.uid).get();
+
+      String userLoginStatus ;
+      bool isKeyPresent = await storage.containsKey(key: 'loginstate');
+      if(isKeyPresent) {
+        userLoginStatus = await storage.read(key: 'loginstate');
+      } else{
         return Login();
       }
-      Map<String, dynamic> mapp = ds.data();
-      if (mapp.containsKey('city')) {
+      print("MAIN STATUS: "+userLoginStatus);
+      if (userLoginStatus.isEmpty ||userLoginStatus == 'false' ) {
+        return Login();
+      }
+      // Map<String, dynamic> mapp = ds.data();
+      if (userLoginStatus == "true") {
         print('dash');
         await Future<dynamic>.delayed(const Duration(milliseconds: 1000));
         return MainHomePage();
-      } else {
-        return googlesignindialog();
       }
     } else {
       return Login();
