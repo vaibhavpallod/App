@@ -85,6 +85,7 @@ class _OTPScreenState extends State<OTPScreen> {
           PhoneAuthCredential credential = PhoneAuthProvider.credential(verificationId: widget.verificationId, smsCode: finalCode);
             UserCredential userCredential = await widget.auth
                 .signInWithCredential(credential);
+
             Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (BuildContext context)=>MainHomePage()), (route) => false);
 
         },

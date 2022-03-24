@@ -66,7 +66,6 @@ class App extends StatelessWidget {
     return MaterialApp(
       title: 'Uber ',
       theme: ThemeData(
-        primarySwatch: Colors.orange,
       ),
       home: Scaffold(
         body: Center(
