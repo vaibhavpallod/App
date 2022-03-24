@@ -27,6 +27,9 @@
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages
+.lock
+.idea
+.dart_tool
 .pub-cache/
 .pub/
 /build/

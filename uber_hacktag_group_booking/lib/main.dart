@@ -40,8 +40,9 @@ class App extends StatelessWidget {
     print('initializing');
     await Firebase.initializeApp();
     CollectionReference userCol =
-        FirebaseFirestore.instance.collection('users');
+        FirebaseFirestore.instance.collection('allusers');
     if (FirebaseAuth.instance.currentUser != null) {
+      print('MAIN: current user id' + FirebaseAuth.instance.currentUser.uid);
       DocumentSnapshot ds =
           await userCol.doc(FirebaseAuth.instance.currentUser.uid).get();
       if (!ds.exists) {
