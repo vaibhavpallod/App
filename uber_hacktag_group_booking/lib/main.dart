@@ -22,8 +22,8 @@ class MyApp extends StatelessWidget {
    MyApp({Key key}) : super(key: key);
 
 
-   FirebaseDatabase database = FirebaseDatabase.instance;
-   FirebaseApp secondaryApp = Firebase.app('SecondaryApp');
+   // FirebaseDatabase database = FirebaseDatabase.instance;
+   // FirebaseApp secondaryApp = Firebase.app('SecondaryApp');
   // FirebaseDatabase database = FirebaseDatabase.instanceFor(app: secondaryApp);
   // This widget is the root of your application.
   @override
