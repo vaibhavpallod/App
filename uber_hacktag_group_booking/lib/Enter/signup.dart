@@ -1,13 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:uber_hacktag_group_booking/Enter/login.dart';
 import 'package:uuid/uuid.dart';
 
 import '../konstants/ResponsiveWidget.dart';
@@ -16,28 +17,38 @@ import '../konstants/loaders.dart';
 import '../pages/MainHomePage.dart';
 
 class SignUp extends StatefulWidget {
+  String mob_number;
+  FirebaseAuth auth;
+
+  SignUp({this.mob_number, this.auth});
+
   @override
   _SignUpState createState() => _SignUpState();
 }
 
 class _SignUpState extends State<SignUp> {
   final _formKey = GlobalKey<FormState>();
-  String mail, password, password1, name, phoneNumber, verificationId;
+  String mail, name;
   bool load = false;
   bool _obscureText = true;
-  bool _obscureText1 = true;
   FirebaseFirestore firestore = FirebaseFirestore.instance;
-  CollectionReference alluserscol =
-      FirebaseFirestore.instance.collection('allusers');
-  CollectionReference driversCol =
-      FirebaseFirestore.instance.collection('driver');
-  CollectionReference userscol = FirebaseFirestore.instance.collection('users');
 
+  // CollectionReference alluserscol =
+  //     FirebaseFirestore.instance.collection('allusers');
+  // CollectionReference driversCol =
+  //     FirebaseFirestore.instance.collection('driver');
+  // CollectionReference userscol = FirebaseFirestore.instance.collection('users');
+  DatabaseReference allUsersDatabaseReference =
+      FirebaseDatabase.instance.ref().child('allusers');
+  DatabaseReference driversDatabaseReference =
+      FirebaseDatabase.instance.ref().child('drivers');
+  DatabaseReference usersDatabaseReference =
+      FirebaseDatabase.instance.ref().child('users');
+
+  TextEditingController phoneController = TextEditingController();
   TextEditingController nameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
-  TextEditingController phoneController = TextEditingController();
   TextEditingController cityController = TextEditingController();
-  TextEditingController otpCode = TextEditingController();
   final _dropdownFormKey = GlobalKey<FormState>();
   final storage = const FlutterSecureStorage();
 
@@ -62,6 +73,12 @@ class _SignUpState extends State<SignUp> {
     setState(() {
       _obscureText = !_obscureText;
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    phoneController.text = widget.mob_number;
   }
 
   getUserLocation() async {
@@ -131,23 +148,26 @@ class _SignUpState extends State<SignUp> {
     }
   }
 
-  Future<bool> createUser(AuthCredential credential) async {
+  Future<bool> createUser() async {
     try {
       print("SIGNUP: Creating user and storing it in firestore");
       // UserCredential userCredential = await FirebaseAuth.instance
       //     .createUserWithEmailAndPassword(email: mail, password: password);
-      var result = await _auth.signInWithCredential(credential);
-      String uid = result.user.uid; //userCredential.user.uid;
+      // var result = await _auth.signInWithCredential(credential);
+      String uid = widget
+          .auth.currentUser.uid; //result.user.uid; //userCredential.user.uid;
       Map<String, dynamic> user;
       var uuid = const Uuid();
       var randId = uuid.v1();
       // var uuidStr = uuid.toString().substring(0,8);
+      name = nameController.text;
+      mail =emailController.text;
       if (_currentSelectedCustomerType == "Driver") {
         user = {
           'id': randId.substring(0, 8),
           'email': mail,
           'name': name,
-          'phone': phoneNumber,
+          'phone': widget.mob_number,
           'city': city,
           'uid': uid,
         };
@@ -156,25 +176,27 @@ class _SignUpState extends State<SignUp> {
           'id': randId.substring(0, 8),
           'email': mail,
           'name': name,
-          'phone': phoneNumber,
+          'phone': widget.mob_number,
           'city': city,
           'uid': uid,
         };
       }
       print(user);
-      alluserscol
-          .doc(uid)
+      allUsersDatabaseReference
+          .child(uid)
           .set(user)
           .then((value) => {
                 if (_currentSelectedCustomerType == "driver")
-                  {driversCol.doc(uid).set(user)}
+                  {driversDatabaseReference.child(uid).set(user)}
                 else
-                  {userscol.doc(uid).set(user)}
+                  {usersDatabaseReference.child(uid).set(user)}
               })
           .whenComplete(() async => {
+                await storage.write(key: 'loginstate', value: 'true'),
                 setState(() {
                   load = false;
                 }),
+                // await FlutterSecureStorage
                 Fluttertoast.showToast(msg: 'Signed Up Successfully'),
                 Navigator.pushAndRemoveUntil(
                     context,
@@ -186,31 +208,60 @@ class _SignUpState extends State<SignUp> {
               })
           .catchError((onError) {
         print("SIGNUP: " + onError.toString());
-        // showMessage(onError.toString());
         setState(() {
           load = false;
         });
         Fluttertoast.showToast(msg: onError.toString());
-      }); //.whenComplete(() => {});
+      });
+      // alluserscol
+      //     .doc(uid)
+      //     .set(user)
+      //     .then((value) => {
+      //           if (_currentSelectedCustomerType == "driver")
+      //             {driversCol.doc(uid).set(user)}
+      //           else
+      //             {userscol.doc(uid).set(user)}
+      //         })
+      //     .whenComplete(() async => {
+      //           setState(() {
+      //             load = false;
+      //           }),
+      //           Fluttertoast.showToast(msg: 'Signed Up Successfully'),
+      //           Navigator.pushAndRemoveUntil(
+      //               context,
+      //               MaterialPageRoute(
+      //                   builder: (BuildContext context) => MainHomePage()),
+      //               (route) => false),
+      //           await storage.write(
+      //               key: 'customerType', value: _currentSelectedCustomerType),
+      //         })
+      //     .catchError((onError) {
+      //   print("SIGNUP: " + onError.toString());
+      //   // showMessage(onError.toString());
+      //   setState(() {
+      //     load = false;
+      //   });
+      //   Fluttertoast.showToast(msg: onError.toString());
+      // }); //.whenComplete(() => {});
     } catch (e) {
+      // setState(() {
+      //   load = false;
+      // });
+      // if (e.toString().toLowerCase().contains('weak_password')) {
+      //   Fluttertoast.showToast(msg: 'The password provided is too weak.');
+      // } else if (e.toString().toLowerCase().contains('email_already_in_use')) {
+      //   setState(() {
+      //     load = false;
+      //   });
+      //   Fluttertoast.showToast(
+      //       msg: 'The account already exists for that email.');
+      // } else {
       setState(() {
         load = false;
       });
-      if (e.toString().toLowerCase().contains('weak_password')) {
-        Fluttertoast.showToast(msg: 'The password provided is too weak.');
-      } else if (e.toString().toLowerCase().contains('email_already_in_use')) {
-        setState(() {
-          load = false;
-        });
-        Fluttertoast.showToast(
-            msg: 'The account already exists for that email.');
-      } else {
-        setState(() {
-          load = false;
-        });
-        print('SIGNUP: error ' + e.toString());
-        Fluttertoast.showToast(msg: 'Try again in sometime' + e.toString());
-      }
+      print('SIGNUP: error ' + e.toString());
+      Fluttertoast.showToast(msg: 'Try again in sometime' + e.toString());
+      // }
       return false;
     }
 
@@ -255,7 +306,6 @@ class _SignUpState extends State<SignUp> {
                                           _getHeader(),
                                           _getTextFields(),
                                           _getSignIn(),
-                                          _getBottomRow(context),
                                         ],
                                       ),
                                     ),
@@ -297,16 +347,23 @@ class _SignUpState extends State<SignUp> {
   }
 
   _getBackBtn() {
-    return const Positioned(
+    return Positioned(
       top: 35,
       left: 25,
-      child: Icon(
-        Icons.arrow_back_ios,
-        color: Colors.white,
+      child: GestureDetector(
+        onTap: () {
+          Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => Login()));
+        },
+        child: Icon(
+          Icons.arrow_back_ios,
+          color: Colors.white,
+        ),
       ),
     );
   }
 
+/*
   _getBottomRow(context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -336,6 +393,7 @@ class _SignUpState extends State<SignUp> {
       ],
     );
   }
+*/
 
   _getSignIn() {
     return Row(
@@ -352,20 +410,16 @@ class _SignUpState extends State<SignUp> {
         ),
         InkWell(
           onTap: () async {
+            setState(() {
+              load = true;
+            });
+            // FirebaseService service = new FirebaseService();
             if (_formKey.currentState.validate()) {
-              _formKey.currentState.save();
+              await createUser();
+            }else{
               setState(() {
-                load = true;
+                load = false;
               });
-              // FirebaseService service = new FirebaseService();
-              if (_formKey.currentState.validate()) {
-                setState(() {
-                  load = true;
-                });
-                await _verifyOTP(verificationId, smsCode);
-                // await phoneSignIn(phoneNumber.toString());
-              }
-              // await createUser();
             }
           },
           child: Padding(
@@ -416,7 +470,7 @@ class _SignUpState extends State<SignUp> {
             },
             onSaved: (val) => name = val,
             keyboardType: TextInputType.text,
-            cursorColor: const Color(0xff3e60c1),
+            cursorColor: const Color(0xff000000),
             style: const TextStyle(
               fontFamily: 'MontserratMed',
               color: Colors.black,
@@ -424,7 +478,7 @@ class _SignUpState extends State<SignUp> {
             ),
             decoration: InputDecoration(
               prefixIcon:
-                  const Icon(Icons.person, color: Color(0xff3e60c1), size: 20),
+                  const Icon(Icons.person, color: Color(0xff000000), size: 20),
               hintText: "Name",
               hintStyle: const TextStyle(
                 fontFamily: 'MontserratMed',
@@ -458,7 +512,7 @@ class _SignUpState extends State<SignUp> {
             onSaved: (val) => mail = val,
             controller: emailController,
             keyboardType: TextInputType.emailAddress,
-            cursorColor: const Color(0xff3e60c1),
+            cursorColor: const Color(0xff000000),
             style: const TextStyle(
               fontFamily: 'MontserratMed',
               color: Colors.black,
@@ -471,7 +525,7 @@ class _SignUpState extends State<SignUp> {
                 fontWeight: FontWeight.bold,
               ),
               prefixIcon:
-                  const Icon(Icons.email, color: Color(0xff3e60c1), size: 20),
+                  const Icon(Icons.email, color: Color(0xff000000), size: 20),
               hintText: "Email",
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30.0),
@@ -489,18 +543,20 @@ class _SignUpState extends State<SignUp> {
           borderRadius: BorderRadius.circular(10.0),
           elevation: _large ? 12 : (_medium ? 10 : 8),
           child: TextFormField(
-            validator: (val) {
-              if (val.isEmpty) {
-                return 'This field cannot be empty!';
-              } else if (val.trim().length < 10) {
-                return 'Enter a valid phone number!';
-              }
-              return null;
-            },
+            enabled: false,
+            readOnly: true,
+            // validator: (val) {
+            //   if (val.isEmpty) {
+            //     return 'This field cannot be empty!';
+            //   } else if (val.trim().length < 10) {
+            //     return 'Enter a valid phone number!';
+            //   }
+            //   return null;
+            // },
             // onSaved: (val) => phoneNumber = val,
             controller: phoneController,
             keyboardType: TextInputType.phone,
-            cursorColor: const Color(0xff3e60c1),
+            cursorColor: const Color(0xff000000),
             decoration: InputDecoration(
               hintStyle: const TextStyle(
                 fontFamily: 'MontserratMed',
@@ -508,78 +564,26 @@ class _SignUpState extends State<SignUp> {
                 fontWeight: FontWeight.bold,
               ),
               prefixIcon:
-                  const Icon(Icons.phone, color: Color(0xff3e60c1), size: 20),
+                  const Icon(Icons.phone, color: Color(0xff000000), size: 20),
               hintText: "Phone Number",
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30.0),
                   borderSide: BorderSide.none),
             ),
-            onChanged: (val) {
-              // setState(() {
-              //   print('SIGNUP: onchanged'+ val);
-              phoneNumber = val;
-              // });
-            },
+
+            // onChanged: (val) {
+            //   // setState(() {
+            //   //   print('SIGNUP: onchanged'+ val);
+            //   widget.mob_number = val;
+            //   // });
+            // },
+
             style: const TextStyle(
               fontFamily: 'MontserratMed',
               color: Colors.black,
               fontWeight: FontWeight.bold,
             ),
           ),
-        ),
-        SizedBox(height: _height / 30.0),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ElevatedButton(
-                onPressed: () => {
-                  phoneSignIn(phoneNumber.toString()),
-                },
-                style: ButtonStyle(
-                  elevation: MaterialStateProperty.all(10.0),
-                  backgroundColor: MaterialStateProperty.all(Colors.white),
-                  padding: MaterialStateProperty.all(
-                      EdgeInsets.symmetric(horizontal: 10.0)),
-                ),
-                child: Text('Get OTP'),
-              ),
-            ),
-            Expanded(
-              child: Material(
-                borderRadius: BorderRadius.circular(10.0),
-                elevation: _large ? 12 : (_medium ? 10 : 8),
-                child: TextFormField(
-                  keyboardType: TextInputType.number,
-                  controller: otpCode,
-                  obscureText: true,
-                  cursorColor: const Color(0xff3e60c1),
-                  decoration: InputDecoration(
-                    hintStyle: const TextStyle(
-                      fontFamily: 'MontserratMed',
-                      color: Colors.blueGrey,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    prefixIcon: const Icon(FontAwesomeIcons.key,
-                        color: Color(0xff3e60c1), size: 18),
-                    hintText: "Enter OTP",
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30.0),
-                        borderSide: BorderSide.none),
-                  ),
-                  onChanged: (val) {
-                    smsCode = val;
-                  },
-                  style: const TextStyle(
-                    fontFamily: 'MontserratMed',
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ],
         ),
         SizedBox(height: _height / 30.0),
         Material(
@@ -611,7 +615,7 @@ class _SignUpState extends State<SignUp> {
                 fontWeight: FontWeight.bold,
               ),
               prefixIcon: const Icon(Icons.people_rounded,
-                  color: Color(0xff3e60c1), size: 20),
+                  color: Color(0xff000000), size: 20),
               hintText: "Customer Type",
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30.0),
@@ -641,7 +645,7 @@ class _SignUpState extends State<SignUp> {
             onSaved: (val) => city = val,
             controller: cityController,
             keyboardType: TextInputType.phone,
-            cursorColor: const Color(0xff3e60c1),
+            cursorColor: const Color(0xff000000),
             decoration: InputDecoration(
               hintStyle: const TextStyle(
                 fontFamily: 'MontserratMed',
@@ -649,7 +653,7 @@ class _SignUpState extends State<SignUp> {
                 fontWeight: FontWeight.bold,
               ),
               prefixIcon: const Icon(Icons.location_city,
-                  color: Color(0xff3e60c1), size: 20),
+                  color: Color(0xff000000), size: 20),
               hintText: "City",
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30.0),
@@ -686,7 +690,7 @@ class _SignUpState extends State<SignUp> {
     );
   }
 
-  Future<void> phoneSignIn(String phoneNumber) async {
+  /* Future<void> phoneSignIn(String phoneNumber) async {
     // await _auth.phone
     print("SIGNUP: " + '+91 ' + phoneNumber.toString());
     await _auth.verifyPhoneNumber(
@@ -769,7 +773,7 @@ class _SignUpState extends State<SignUp> {
         MaterialPageRoute(builder: (BuildContext context) => MainHomePage()),
         (route) => false);
   }
-
+*/
   void showMessage(String errorMessage) {
     showDialog(
         context: context,
@@ -836,7 +840,7 @@ class BackgroundSignIn extends CustomPainter {
         sw * 0.6, sh * 0.05, sw * 0.27, sh * 0.01, sw * 0.18, sh * 0.12);
     yellowWave.quadraticBezierTo(sw * 0.12, sh * 0.2, 0, sh * 0.2);
     yellowWave.close();
-    paint.color = const Color(0xff3e60c1);
+    paint.color = const Color(0xff000000);
     canvas.drawPath(yellowWave, paint);
 
     Path yellowWaveBottom = Path();
@@ -846,7 +850,7 @@ class BackgroundSignIn extends CustomPainter {
     yellowWaveBottom.quadraticBezierTo(sw * 0.88, sh * 0.8, sw, sh * 0.8);
     yellowWaveBottom.lineTo(sw, sh);
     yellowWaveBottom.close();
-    paint.color = const Color(0xff3e60c1);
+    paint.color = const Color(0xff000000);
     canvas.drawPath(yellowWaveBottom, paint);
   }
 
@@ -865,7 +869,7 @@ class BackgroundSignUp extends CustomPainter {
 
     Path mainBackground = Path();
     mainBackground.addRect(Rect.fromLTRB(0, 0, sw, sh));
-    paint.color = const Color(0xff5983fc);
+    paint.color = const Color(0xff000000);
     canvas.drawPath(mainBackground, paint);
 
     Path blueWave = Path();
@@ -874,7 +878,7 @@ class BackgroundSignUp extends CustomPainter {
     blueWave.cubicTo(sw * 0.8, sh * 0.8, sw * 0.55, sh * 0.8, sw * 0.45, sh);
     blueWave.lineTo(0, sh);
     blueWave.close();
-    paint.color = const Color(0xff3e60c1);
+    paint.color = const Color(0x33ffffff);
     // paint.color = Colors.orange;
     canvas.drawPath(blueWave, paint);
 
@@ -884,7 +888,7 @@ class BackgroundSignUp extends CustomPainter {
     greyWave.cubicTo(sw * 0.65, sh * 0.45, sw * 0.25, sh * 0.35, 0, sh * 0.5);
     greyWave.close();
     // paint.color = Colors.grey.shade800;
-    paint.color = const Color(0xff2e4583);
+    paint.color = const Color(0xff000000);
     canvas.drawPath(greyWave, paint);
   }
 

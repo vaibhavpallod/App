@@ -1,18 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:country_code_picker/country_code_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:uber_hacktag_group_booking/Enter/signup.dart';
-import 'package:country_code_picker/country_code_picker.dart';
-import '../pages/MainHomePage.dart';
-import '../konstants/ResponsiveWidget.dart';
+
 import '../konstants/loaders.dart';
-import '../konstants/size_config.dart';
-import 'googlesignindialog.dart';
 import 'otp.dart';
 
 class Login extends StatefulWidget {
@@ -40,7 +35,7 @@ class _LoginState extends State<Login> {
   FirebaseFirestore firestore = FirebaseFirestore.instance;
   CollectionReference users = FirebaseFirestore.instance.collection('users');
   final storage = const FlutterSecureStorage();
-  String countryCode="+91";
+  String countryCode = "+91";
   double _height, _width, _pixelRatio;
   bool pict = false;
   bool load = false;
@@ -138,38 +133,42 @@ class _LoginState extends State<Login> {
   // }
 
   login() async {
-    auth=FirebaseAuth.instance;
-      await auth.verifyPhoneNumber(
-        phoneNumber:countryCode+phoneNumber,
-        verificationCompleted: (PhoneAuthCredential credential) {
-
-        },
-        verificationFailed: (FirebaseAuthException e) {
+    auth = FirebaseAuth.instance;
+    await auth.verifyPhoneNumber(
+      phoneNumber: countryCode + phoneNumber,
+      verificationCompleted: (PhoneAuthCredential credential) {},
+      verificationFailed: (FirebaseAuthException e) {
+        setState(() {
+          load = false;
+        });
+        if (e.toString().toLowerCase().contains('user_not_found')) {
           setState(() {
             load = false;
           });
-          if (e.toString().toLowerCase().contains('user_not_found')) {
-            setState(() {
-              load = false;
-            });
-            Fluttertoast.showToast(msg: 'No user found for that number');
-          }
-          else {
-            setState(() {
-              load = false;
-            });
-            print(e);
-            Fluttertoast.showToast(msg: e.toString());
-          }
-        },
-        codeSent: (String verificationId, int resendToken) {
+          Fluttertoast.showToast(msg: 'No user found for that number');
+        } else {
           setState(() {
-            load=false;
+            load = false;
           });
-          Navigator.push(context, MaterialPageRoute(builder: (BuildContext context)=>OTPScreen(verificationId: verificationId,auth: auth,)));
-        },
-        codeAutoRetrievalTimeout: (String verificationId) {},
-      );
+          print(e);
+          Fluttertoast.showToast(msg: e.toString());
+        }
+      },
+      codeSent: (String verificationId, int resendToken) {
+        setState(() {
+          load = false;
+        });
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (BuildContext context) => OTPScreen(
+                      verificationId: verificationId,
+                      auth: auth,
+                      phonenumber: phoneNumber,
+                    )));
+      },
+      codeAutoRetrievalTimeout: (String verificationId) {},
+    );
   }
 
   // signInWithFacebook()async{
@@ -237,9 +236,9 @@ class _LoginState extends State<Login> {
                               height: 100,
                               width: 100,
                               decoration: const BoxDecoration(
-                                borderRadius: BorderRadius.all(Radius.circular(50.0)),
-                                color: Colors.black
-                              ),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(50.0)),
+                                  color: Colors.black),
                               padding: const EdgeInsets.all(15.0),
                               child: Image.asset(
                                 "images/uberlogo.jpg",
@@ -252,16 +251,16 @@ class _LoginState extends State<Login> {
                             Row(
                               children: [
                                 Container(
-                                  child:  CountryCodePicker(
-                                    onChanged: (val){
+                                  child: CountryCodePicker(
+                                    onChanged: (val) {
                                       print(val);
                                       setState(() {
-                                        countryCode=val.code;
+                                        countryCode = val.code;
                                       });
                                     },
                                     // Initial selection and favorite can be one of code ('IT') OR dial_code('+39')
                                     initialSelection: 'IN',
-                                    favorite: ['+91','IN'],
+                                    favorite: ['+91', 'IN'],
                                     // optional. Shows only country name and flag
                                     showCountryOnly: false,
                                     // optional. Shows only country name and flag when popup is closed.
@@ -274,20 +273,23 @@ class _LoginState extends State<Login> {
                                 Expanded(
                                   child: Material(
                                     child: Padding(
-                                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 8),
                                       child: TextFormField(
-                                        onSaved: (val){
+                                        onSaved: (val) {
                                           setState(() {
-                                            phoneNumber=val.trim();
+                                            phoneNumber = val.trim();
                                           });
                                         },
                                         keyboardType: TextInputType.number,
-                                        style: GoogleFonts.workSans(color: Colors.black, fontSize: 14),
+                                        style: GoogleFonts.workSans(
+                                            color: Colors.black, fontSize: 14),
                                         decoration: InputDecoration(
                                           border: OutlineInputBorder(),
                                           labelText: "Phone Number",
                                           focusColor: Colors.black,
-                                          labelStyle: GoogleFonts.workSans( fontSize: 14),
+                                          labelStyle: GoogleFonts.workSans(
+                                              fontSize: 14),
                                         ),
                                       ),
                                     ),
@@ -329,34 +331,34 @@ class _LoginState extends State<Login> {
                             //   ),
                             // ),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 20),
                               child: GestureDetector(
-                                onTap: ()async{
-    if (_formKey.currentState.validate()) {
-            _formKey.currentState.save();
-            setState(() {
-              load = true;
-            });
-            await login();
-          }
+                                onTap: () async {
+                                  if (_formKey.currentState.validate()) {
+                                    _formKey.currentState.save();
+                                    setState(() {
+                                      load = true;
+                                    });
+                                    await login();
+                                  }
                                 },
                                 child: Container(
                                   color: Colors.black,
                                   child: Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 10),
                                     child: Center(
                                       child: Text(
-                                        'LOGIN',style: GoogleFonts.workSans(
-                                          fontSize: 20,
-                                        color: Colors.white
-                                      ),
+                                        'LOGIN',
+                                        style: GoogleFonts.workSans(
+                                            fontSize: 20, color: Colors.white),
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
                             )
-
 
 //                         // Row(
 //                         //   mainAxisAlignment: MainAxisAlignment.center,
@@ -474,5 +476,4 @@ class _LoginState extends State<Login> {
     RegExp regex = new RegExp(pattern);
     return (!regex.hasMatch(value)) ? false : true;
   }
-
 }
