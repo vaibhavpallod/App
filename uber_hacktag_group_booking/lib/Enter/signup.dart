@@ -10,10 +10,10 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:uuid/uuid.dart';
 
-import '../pages/MainHomePage.dart';
 import '../konstants/ResponsiveWidget.dart';
 import '../konstants/functions.dart';
 import '../konstants/loaders.dart';
+import '../pages/MainHomePage.dart';
 
 class SignUp extends StatefulWidget {
   @override
@@ -29,9 +29,9 @@ class _SignUpState extends State<SignUp> {
   FirebaseFirestore firestore = FirebaseFirestore.instance;
   CollectionReference alluserscol =
       FirebaseFirestore.instance.collection('allusers');
-  CollectionReference producers =
+  CollectionReference driversCol =
       FirebaseFirestore.instance.collection('driver');
-  CollectionReference userscol = FirebaseFirestore.instance.collection('user');
+  CollectionReference userscol = FirebaseFirestore.instance.collection('users');
 
   TextEditingController nameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
@@ -131,17 +131,18 @@ class _SignUpState extends State<SignUp> {
     }
   }
 
-  createUser() async {
+  Future<bool> createUser(AuthCredential credential) async {
     try {
       print("SIGNUP: Creating user and storing it in firestore");
-      UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(email: mail, password: password);
-      String uid = userCredential.user.uid;
+      // UserCredential userCredential = await FirebaseAuth.instance
+      //     .createUserWithEmailAndPassword(email: mail, password: password);
+      var result = await _auth.signInWithCredential(credential);
+      String uid = result.user.uid; //userCredential.user.uid;
       Map<String, dynamic> user;
       var uuid = const Uuid();
       var randId = uuid.v1();
       // var uuidStr = uuid.toString().substring(0,8);
-      if (_currentSelectedCustomerType == "User") {
+      if (_currentSelectedCustomerType == "Driver") {
         user = {
           'id': randId.substring(0, 8),
           'email': mail,
@@ -166,7 +167,7 @@ class _SignUpState extends State<SignUp> {
           .set(user)
           .then((value) => {
                 if (_currentSelectedCustomerType == "driver")
-                  {producers.doc(uid).set(user)}
+                  {driversCol.doc(uid).set(user)}
                 else
                   {userscol.doc(uid).set(user)}
               })
@@ -184,6 +185,8 @@ class _SignUpState extends State<SignUp> {
                     key: 'customerType', value: _currentSelectedCustomerType),
               })
           .catchError((onError) {
+        print("SIGNUP: " + onError.toString());
+        // showMessage(onError.toString());
         setState(() {
           load = false;
         });
@@ -205,9 +208,13 @@ class _SignUpState extends State<SignUp> {
         setState(() {
           load = false;
         });
-        Fluttertoast.showToast(msg: 'Try again in sometime');
+        print('SIGNUP: error ' + e.toString());
+        Fluttertoast.showToast(msg: 'Try again in sometime' + e.toString());
       }
+      return false;
     }
+
+    return true;
   }
 
   @override
@@ -716,7 +723,7 @@ class _SignUpState extends State<SignUp> {
 
   _onVerificationFailed(FirebaseAuthException exception) {
     if (exception.code == 'invalid-phone-number') {
-      print("SIGNUP: +91"+ phoneNumber);
+      print("SIGNUP: +91" + phoneNumber);
       showMessage("The phone number entered is invalid!");
     }
   }
@@ -738,20 +745,24 @@ class _SignUpState extends State<SignUp> {
     var result;
 
     try {
-      result = await _auth.signInWithCredential(credential);
+      await createUser(credential);
     } catch (e) {
       load = false;
       print("SIGNUP: verify" + "failure message: " + e.toString());
 
-      showMessage("Invalid Credentials");
-      // throw e;
+      showMessage("Invalid Credentials or Error white creating user database");
+
       return false;
     }
     print("SIGNUP: verify" + "success");
-
-    setState(() {
-      load = false;
-    });
+    // if(await createUser()){
+    //   setState(() {
+    //     load = false;
+    //   });
+    //
+    // }else{
+    //   showMessage("Error white creating user database");
+    // }
 
     Navigator.pushAndRemoveUntil(
         context,
@@ -782,9 +793,9 @@ class _SignUpState extends State<SignUp> {
             ],
           );
         }).then((value) {
-      setState(() {
-        load = false;
-      });
+      // setState(() {
+      //   load = false;
+      // });
     });
   }
 }
