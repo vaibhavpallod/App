@@ -7,8 +7,11 @@ import 'package:uber_hacktag_group_booking/pages/MainHomePage.dart';
 
 import 'Enter/OnBoarding/Intro_page.dart';
 import 'Enter/googlesignindialog.dart';
+import 'Enter/login.dart';
 import 'konstants/loaders.dart';
 import 'konstants/size_config.dart';
+// import 'firebase_data';
+import 'package:firebase_database/firebase_database.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,8 +19,12 @@ void main() {
 
 class MyApp extends StatelessWidget {
   // const MyApp({Key? key}) : super(key: key);
-  const MyApp({Key key}) : super(key: key);
+   MyApp({Key key}) : super(key: key);
 
+
+   FirebaseDatabase database = FirebaseDatabase.instance;
+   FirebaseApp secondaryApp = Firebase.app('SecondaryApp');
+  // FirebaseDatabase database = FirebaseDatabase.instanceFor(app: secondaryApp);
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -46,7 +53,7 @@ class App extends StatelessWidget {
       DocumentSnapshot ds =
           await userCol.doc(FirebaseAuth.instance.currentUser.uid).get();
       if (!ds.exists) {
-        return IntroPage();
+        return Login();
       }
       Map<String, dynamic> mapp = ds.data();
       if (mapp.containsKey('city')) {
@@ -57,7 +64,7 @@ class App extends StatelessWidget {
         return googlesignindialog();
       }
     } else {
-      return IntroPage();
+      return Login();
     }
   }
 

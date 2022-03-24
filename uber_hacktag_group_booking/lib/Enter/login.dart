@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:uber_hacktag_group_booking/Enter/signup.dart';
 import 'package:country_code_picker/country_code_picker.dart';
@@ -33,116 +34,113 @@ class Login extends StatefulWidget {
 // String _currentSelectedCustomerType;
 
 class _LoginState extends State<Login> {
-  String _mail, _password;
+  String phoneNumber;
   final _formKey = GlobalKey<FormState>();
   bool _obscureText = true;
   FirebaseFirestore firestore = FirebaseFirestore.instance;
   CollectionReference users = FirebaseFirestore.instance.collection('users');
   final storage = const FlutterSecureStorage();
   String countryCode="+91";
-  bool ieeeMenber = false;
   double _height, _width, _pixelRatio;
   bool pict = false;
-  bool _large,_medium;
-  String pictRegID;
   bool load = false;
   FirebaseAuth auth;
 
   TextEditingController phoneController = TextEditingController();
 
-  signInWithGoogle() async {
-    setState(() {
-      load = true;
-    });
-    // Trigger the authentication flow
-    try {
-      final GoogleSignInAccount googleUser = await GoogleSignIn().signIn();
-
-      // Obtain the auth details from the request
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-
-      // Create a new credential
-      final AuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-      // Once signed in, return the UserCredential
-      UserCredential userCredential =
-          await FirebaseAuth.instance.signInWithCredential(credential);
-      String uid = userCredential.user.uid;
-      DocumentSnapshot ds = await users.doc(uid).get();
-      if (ds.exists) {
-        Map<String, dynamic> map = ds.data();
-        // (ds.data())
-        if (map.containsKey('city')) {
-          setState(() {
-            load = false;
-          });
-          Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(
-                  builder: (BuildContext context) => MainHomePage()),
-              (route) => false);
-        } else {
-          setState(() {
-            load = false;
-          });
-          Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(
-                  builder: (BuildContext context) => googlesignindialog()),
-              (route) => false);
-        }
-      } else {
-        // users
-        //     .add({
-        //   'email': mail, // John Doe
-        //   'name': name, //// 42
-        // })
-        //     .then((value) => print("User Added"))
-        //     .catchError((error) => print("Failed to add user: $error"));
-        User user1 = userCredential.user;
-        Map<String, dynamic> user;
-        if (user1.phoneNumber != null && user1.phoneNumber.isNotEmpty) {
-          user = {
-            'email': user1.email,
-            'name': user1.displayName,
-            'phone': user1.phoneNumber
-          };
-        } else {
-          user = {
-            'email': user1.email,
-            'name': user1.displayName,
-          };
-        }
-        users.doc(uid).set(user).then((value) {
-          Fluttertoast.showToast(msg: 'Signed Up Successfully');
-          setState(() {
-            load = false;
-          });
-          Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(
-                  builder: (BuildContext context) => googlesignindialog()),
-              (route) => false);
-        }).catchError((onError) {
-          Fluttertoast.showToast(msg: onError.toString());
-        });
-      }
-    } catch (e) {
-      setState(() {
-        load = false;
-      });
-      Fluttertoast.showToast(msg: 'Something went wrong');
-      print(e.toString());
-    }
-  }
+  // signInWithGoogle() async {
+  //   setState(() {
+  //     load = true;
+  //   });
+  //   // Trigger the authentication flow
+  //   try {
+  //     final GoogleSignInAccount googleUser = await GoogleSignIn().signIn();
+  //
+  //     // Obtain the auth details from the request
+  //     final GoogleSignInAuthentication googleAuth =
+  //         await googleUser.authentication;
+  //
+  //     // Create a new credential
+  //     final AuthCredential credential = GoogleAuthProvider.credential(
+  //       accessToken: googleAuth.accessToken,
+  //       idToken: googleAuth.idToken,
+  //     );
+  //     // Once signed in, return the UserCredential
+  //     UserCredential userCredential =
+  //         await FirebaseAuth.instance.signInWithCredential(credential);
+  //     String uid = userCredential.user.uid;
+  //     DocumentSnapshot ds = await users.doc(uid).get();
+  //     if (ds.exists) {
+  //       Map<String, dynamic> map = ds.data();
+  //       // (ds.data())
+  //       if (map.containsKey('city')) {
+  //         setState(() {
+  //           load = false;
+  //         });
+  //         Navigator.pushAndRemoveUntil(
+  //             context,
+  //             MaterialPageRoute(
+  //                 builder: (BuildContext context) => MainHomePage()),
+  //             (route) => false);
+  //       } else {
+  //         setState(() {
+  //           load = false;
+  //         });
+  //         Navigator.pushAndRemoveUntil(
+  //             context,
+  //             MaterialPageRoute(
+  //                 builder: (BuildContext context) => googlesignindialog()),
+  //             (route) => false);
+  //       }
+  //     } else {
+  //       // users
+  //       //     .add({
+  //       //   'email': mail, // John Doe
+  //       //   'name': name, //// 42
+  //       // })
+  //       //     .then((value) => print("User Added"))
+  //       //     .catchError((error) => print("Failed to add user: $error"));
+  //       User user1 = userCredential.user;
+  //       Map<String, dynamic> user;
+  //       if (user1.phoneNumber != null && user1.phoneNumber.isNotEmpty) {
+  //         user = {
+  //           'email': user1.email,
+  //           'name': user1.displayName,
+  //           'phone': user1.phoneNumber
+  //         };
+  //       } else {
+  //         user = {
+  //           'email': user1.email,
+  //           'name': user1.displayName,
+  //         };
+  //       }
+  //       users.doc(uid).set(user).then((value) {
+  //         Fluttertoast.showToast(msg: 'Signed Up Successfully');
+  //         setState(() {
+  //           load = false;
+  //         });
+  //         Navigator.pushAndRemoveUntil(
+  //             context,
+  //             MaterialPageRoute(
+  //                 builder: (BuildContext context) => googlesignindialog()),
+  //             (route) => false);
+  //       }).catchError((onError) {
+  //         Fluttertoast.showToast(msg: onError.toString());
+  //       });
+  //     }
+  //   } catch (e) {
+  //     setState(() {
+  //       load = false;
+  //     });
+  //     Fluttertoast.showToast(msg: 'Something went wrong');
+  //     print(e.toString());
+  //   }
+  // }
 
   login() async {
     auth=FirebaseAuth.instance;
       await auth.verifyPhoneNumber(
-        phoneNumber:countryCode+phoneController.text,
+        phoneNumber:countryCode+phoneNumber,
         verificationCompleted: (PhoneAuthCredential credential) {
 
         },
@@ -216,8 +214,6 @@ class _LoginState extends State<Login> {
     _height = MediaQuery.of(context).size.height;
     _width = MediaQuery.of(context).size.width;
     _pixelRatio = MediaQuery.of(context).devicePixelRatio;
-    _large = ResponsiveWidget.isScreenLarge(_width, _pixelRatio);
-    _medium = ResponsiveWidget.isScreenMedium(_width, _pixelRatio);
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -277,34 +273,23 @@ class _LoginState extends State<Login> {
                                 ),
                                 Expanded(
                                   child: Material(
-                                    borderRadius: BorderRadius.circular(25.0),
-                                    elevation: _large ? 12 : (_medium ? 10 : 8),
-                                    child: TextFormField(
-                                      onSaved: (val) {
-                                        setState(() {
-                                          _mail = val;
-                                        });
-                                      },
-                                      controller: phoneController,
-                                      keyboardType: TextInputType.phone,
-                                      cursorColor: const Color(0xff3e60c1),
-                                      decoration: InputDecoration(
-                                        hintText: "Phone Number",
-                                        hintStyle: const TextStyle(
-                                            fontFamily: 'MontserratMed',
-                                            color: Colors.blueGrey),
-                                        border: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(30.0),
-                                            borderSide: BorderSide.none),
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                      child: TextFormField(
+                                        onSaved: (val){
+                                          setState(() {
+                                            phoneNumber=val.trim();
+                                          });
+                                        },
+                                        keyboardType: TextInputType.number,
+                                        style: GoogleFonts.workSans(color: Colors.black, fontSize: 14),
+                                        decoration: InputDecoration(
+                                          border: OutlineInputBorder(),
+                                          labelText: "Phone Number",
+                                          focusColor: Colors.black,
+                                          labelStyle: GoogleFonts.workSans( fontSize: 14),
+                                        ),
                                       ),
-                                      style: const TextStyle(
-                                          fontFamily: 'MontserratMed',
-                                          color: Colors.black),
-                                      onChanged: (val) {
-                                        // setState(() {
-                                        //   email = val;
-                                        // });
-                                      },
                                     ),
                                   ),
                                 ),
@@ -315,42 +300,63 @@ class _LoginState extends State<Login> {
                             const SizedBox(
                               height: 35.0,
                             ),
-                            Material(
-                              elevation: 5.0,
-                              borderRadius: BorderRadius.circular(30.0),
-                              color: const Color(0xff2e4583),
-                              child: MaterialButton(
-                                minWidth:
-                                    MediaQuery.of(context).size.width * 0.6,
-                                padding:
-                                    const EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 15.0),
-                                onPressed: () async {
-                                  if (_formKey.currentState.validate()) {
-                                    _formKey.currentState.save();
-                                    setState(() {
-                                      load = true;
-                                    });
-                                    await login();
-                                  }
+                            // Material(
+                            //   elevation: 5.0,
+                            //   borderRadius: BorderRadius.circular(30.0),
+                            //   color: const Color(0xff2e4583),
+                            //   child: MaterialButton(
+                            //     minWidth:
+                            //         MediaQuery.of(context).size.width * 0.6,
+                            //     padding:
+                            //         const EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 15.0),
+                            //     onPressed: () async {
+                            //       if (_formKey.currentState.validate()) {
+                            //         _formKey.currentState.save();
+                            //         setState(() {
+                            //           load = true;
+                            //         });
+                            //         await login();
+                            //       }
+                            //     },
+                            //     child: const Text(
+                            //       "Login",
+                            //       textAlign: TextAlign.center,
+                            //       style: TextStyle(
+                            //           fontFamily: 'MontserratSemi',
+                            //           fontSize: 20,
+                            //           color: Colors.white),
+                            //     ),
+                            //   ),
+                            // ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              child: GestureDetector(
+                                onTap: ()async{
+    if (_formKey.currentState.validate()) {
+            _formKey.currentState.save();
+            setState(() {
+              load = true;
+            });
+            await login();
+          }
                                 },
-                                child: const Text(
-                                  "Login",
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                      fontFamily: 'MontserratSemi',
-                                      fontSize: 20,
-                                      color: Colors.white),
+                                child: Container(
+                                  color: Colors.black,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                    child: Center(
+                                      child: Text(
+                                        'LOGIN',style: GoogleFonts.workSans(
+                                          fontSize: 20,
+                                        color: Colors.white
+                                      ),
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(
-                              height: 15.0,
-                            ),
-                            _getBottomRow(context),
+                            )
 
-                            const SizedBox(
-                              height: 30.0,
-                            ),
 
 //                         // Row(
 //                         //   mainAxisAlignment: MainAxisAlignment.center,
@@ -469,40 +475,4 @@ class _LoginState extends State<Login> {
     return (!regex.hasMatch(value)) ? false : true;
   }
 
-  _getBottomRow(context) {
-    return Row(
-      // crossAxisAlignment: CrossAxisAlignment.end,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: GestureDetector(
-            onTap: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (BuildContext context) => SignUp()));
-            },
-            child: Text(
-              "Don't have an account, Sign Up",
-              style: TextStyle(
-                color: Colors.orange.withAlpha(500),
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                fontFamily: 'MontserratMed',
-              ),
-            ),
-          ),
-        ),
-        const Text(
-          '',
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-            decoration: TextDecoration.underline,
-          ),
-        ),
-      ],
-    );
-  }
 }

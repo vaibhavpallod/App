@@ -1,3 +1,4 @@
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -80,12 +81,10 @@ class _OTPScreenState extends State<OTPScreen> {
           )),
       floatingActionButton: FloatingActionButton(
         onPressed: ()async{
-          print(widget.verificationId);
-          print(finalCode);
           PhoneAuthCredential credential = PhoneAuthProvider.credential(verificationId: widget.verificationId, smsCode: finalCode);
             UserCredential userCredential = await widget.auth
                 .signInWithCredential(credential);
-
+          DatabaseReference ref = FirebaseDatabase.instance.ref();
             Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (BuildContext context)=>MainHomePage()), (route) => false);
 
         },
