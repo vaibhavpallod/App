@@ -44,7 +44,7 @@ class _BookingFormState extends State<BookingForm> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Text('Passenger ${pos+1}',style: GoogleFonts.workSans(color: Colors.black, fontSize: 16,fontWeight: FontWeight.w500),textAlign: TextAlign.start,),
+                    child: Text('Cab ${pos+1} primary passenger',style: GoogleFonts.workSans(color: Colors.black, fontSize: 16,fontWeight: FontWeight.w500),textAlign: TextAlign.start,),
                   ),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),

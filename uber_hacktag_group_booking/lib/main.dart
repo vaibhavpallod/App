@@ -14,7 +14,7 @@ import 'konstants/size_config.dart';
 import 'package:firebase_database/firebase_database.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp( MyApp());
 }
 
 class MyApp extends StatelessWidget {
