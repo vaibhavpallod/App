@@ -8,6 +8,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:uber_hacktag_group_booking/Driver/DriverHomePage.dart';
 import 'package:uber_hacktag_group_booking/Enter/login.dart';
 import 'package:uuid/uuid.dart';
 
@@ -161,7 +162,7 @@ class _SignUpState extends State<SignUp> {
       var randId = uuid.v1();
       // var uuidStr = uuid.toString().substring(0,8);
       name = nameController.text;
-      mail =emailController.text;
+      mail = emailController.text;
       if (_currentSelectedCustomerType == "Driver") {
         user = {
           'id': randId.substring(0, 8),
@@ -186,23 +187,42 @@ class _SignUpState extends State<SignUp> {
           .child(uid)
           .set(user)
           .then((value) => {
-                if (_currentSelectedCustomerType == "driver")
+                print("_currentSelectedCustomerType" +
+                    _currentSelectedCustomerType.toString()),
+                if (_currentSelectedCustomerType == "Driver")
                   {driversDatabaseReference.child(uid).set(user)}
                 else
                   {usersDatabaseReference.child(uid).set(user)}
               })
           .whenComplete(() async => {
                 await storage.write(key: 'loginstate', value: 'true'),
+                await storage.write(key: 'userType', value: 'user'),
+
                 setState(() {
                   load = false;
                 }),
                 // await FlutterSecureStorage
                 Fluttertoast.showToast(msg: 'Signed Up Successfully'),
-                Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(
-                        builder: (BuildContext context) => MainHomePage()),
-                    (route) => false),
+                if (_currentSelectedCustomerType == "Driver")
+                  {
+                    await storage.write(key: 'userType', value: 'Driver'),
+                    Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                            builder: (BuildContext context) =>
+                                DriverHomePage()),
+                        (route) => false),
+                  }
+                else
+                  {
+                    await storage.write(key: 'userType', value: 'User'),
+                    Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                            builder: (BuildContext context) => MainHomePage()),
+                        (route) => false),
+                  },
+
                 await storage.write(
                     key: 'customerType', value: _currentSelectedCustomerType),
               })
@@ -416,7 +436,7 @@ class _SignUpState extends State<SignUp> {
             // FirebaseService service = new FirebaseService();
             if (_formKey.currentState.validate()) {
               await createUser();
-            }else{
+            } else {
               setState(() {
                 load = false;
               });
@@ -442,8 +462,8 @@ class _SignUpState extends State<SignUp> {
 
   List<DropdownMenuItem<String>> get dropdownItems {
     List<DropdownMenuItem<String>> menuItems = [
-      const DropdownMenuItem(child: Text("User"), value: "Producer"),
-      const DropdownMenuItem(child: Text("Driver"), value: "Consumer"),
+      const DropdownMenuItem(child: Text("User"), value: "User"),
+      const DropdownMenuItem(child: Text("Driver"), value: "Driver"),
       // DropdownMenuItem(child: Text("Brazil"),value: "Brazil"),
       // DropdownMenuItem(child: Text("England"),value: "England"),
     ];
