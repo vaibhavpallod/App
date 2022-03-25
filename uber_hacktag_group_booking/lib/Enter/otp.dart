@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:uber_hacktag_group_booking/Driver/DriverHomePage.dart';
 import 'package:uber_hacktag_group_booking/Enter/signup.dart';
 import 'package:uber_hacktag_group_booking/pages/MainHomePage.dart';
 
@@ -121,16 +122,29 @@ class _OTPScreenState extends State<OTPScreen> {
                   }),
                   storage
                       .write(key: 'loginstate', value: 'true')
-                      .whenComplete(() => {
+                      .whenComplete(() async => {
                             setState(() {
                               load = false;
                             }),
-                            Navigator.pushAndRemoveUntil(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (BuildContext context) =>
-                                        MainHomePage()),
-                                (route) => false),
+                            if(map['type']=="User")
+                              {
+                                await storage.write(key: 'userType', value: 'User'),
+                                Navigator.pushAndRemoveUntil(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (BuildContext context) =>
+                                            MainHomePage()),
+                                    (route) => false),
+                              }else{
+                              await storage.write(key: 'userType', value: 'Driver'),
+                              Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (BuildContext context) =>
+                                          DriverHomePage()),
+                                      (route) => false),
+
+                            }
                           }),
                 }
               else

@@ -1,35 +1,29 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+
+// import 'firebase_data';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:uber_hacktag_group_booking/Driver/DriverHomePage.dart';
 import 'package:uber_hacktag_group_booking/pages/MainHomePage.dart';
 
-import 'Enter/OnBoarding/Intro_page.dart';
-import 'Enter/googlesignindialog.dart';
 import 'Enter/login.dart';
 import 'konstants/loaders.dart';
 import 'konstants/size_config.dart';
-// import 'firebase_data';
-import 'package:firebase_database/firebase_database.dart';
 
 void main() {
-  runApp( MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
   // const MyApp({Key? key}) : super(key: key);
   MyApp({Key key}) : super(key: key);
 
-
   // FirebaseDatabase database = FirebaseDatabase.instance;
   // FirebaseApp secondaryApp = Firebase.app('SecondaryApp');
 
-
   // ye line comment ki mene 25 26
-
-
-
 
   // FirebaseDatabase database = FirebaseDatabase.instanceFor(app: secondaryApp);
   // This widget is the root of your application.
@@ -56,30 +50,36 @@ class App extends StatelessWidget {
     // CollectionReference userCol =
     //     FirebaseFirestore.instance.collection('allusers');
     DatabaseReference allUsersDatabaseReference =
-    FirebaseDatabase.instance.ref().child('allusers');
-
+        FirebaseDatabase.instance.ref().child('allusers');
 
     if (FirebaseAuth.instance.currentUser != null) {
       print('MAIN: current user id' + FirebaseAuth.instance.currentUser.uid);
       // DocumentSnapshot ds =
       //     await userCol.doc(FirebaseAuth.instance.currentUser.uid).get();
 
-      String userLoginStatus ;
+      String userLoginStatus;
       bool isKeyPresent = await storage.containsKey(key: 'loginstate');
-      if(isKeyPresent) {
+      if (isKeyPresent) {
         userLoginStatus = await storage.read(key: 'loginstate');
-      } else{
+      } else {
         return Login();
       }
-      print("MAIN STATUS: "+userLoginStatus);
-      if (userLoginStatus.isEmpty ||userLoginStatus == 'false' ) {
+      print("MAIN STATUS: " + userLoginStatus);
+      if (userLoginStatus.isEmpty || userLoginStatus == 'false') {
         return Login();
       }
       // Map<String, dynamic> mapp = ds.data();
       if (userLoginStatus == "true") {
         print('dash');
         await Future<dynamic>.delayed(const Duration(milliseconds: 1000));
-        return MainHomePage();
+
+        String type = await storage.read(key: 'userType');
+
+        if (type == "User") {
+          return MainHomePage();
+        } else {
+          return DriverHomePage();
+        }
       }
     } else {
       return Login();
@@ -90,8 +90,7 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Uber ',
-      theme: ThemeData(
-      ),
+      theme: ThemeData(),
       home: Scaffold(
         body: Center(
           child: FutureBuilder(
