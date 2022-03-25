@@ -126,8 +126,9 @@ class _OTPScreenState extends State<OTPScreen> {
                             setState(() {
                               load = false;
                             }),
-                            if(map['type']=="User")
+                            if(map[userCredential.user.uid]['type']=="user")
                               {
+                                print(map),
                                 await storage.write(key: 'userType', value: 'User'),
                                 Navigator.pushAndRemoveUntil(
                                     context,
