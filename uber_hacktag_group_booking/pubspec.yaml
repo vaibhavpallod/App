@@ -48,7 +48,7 @@ dependencies:
   flutter_screenutil: ^4.0.3+2
   geolocator: ^8.0.5
   flutter_secure_storage: ^5.0.2
-  cached_network_image: ^2.5.0
+#  cached_network_image: ^2.5.0
   like_button: ^1.0.4
   android_intent: ^0.3.7+2
   permission_handler: ^8.1.6

@@ -25,6 +25,7 @@ class _MainHomePageState extends State<MainHomePage> {
   int noc=2;
   bool load=true;
   LocationData location;
+  bool originSame=true;
   bool whichSame=true;
   @override
   void initState() {
@@ -145,8 +146,16 @@ class _MainHomePageState extends State<MainHomePage> {
                               ],
                                 minHeight: 30,
                                 onToggle: (index){
+                                if(index==0){
+                                  originSame=true;
+                                }else{
+                                  originSame=false;
+                                }
                                 },
                                 inactiveBgColor: Colors.white,
+                                activeBgColor: [
+                                  Colors.orange
+                                ],
                                 customTextStyles: [
                                   GoogleFonts.workSans(color: Colors.black,fontSize: 14,fontWeight: FontWeight.w300),
                                   GoogleFonts.workSans(color: Colors.black,fontSize: 14,fontWeight: FontWeight.w400),
@@ -179,7 +188,7 @@ class _MainHomePageState extends State<MainHomePage> {
                               padding: const EdgeInsets.all(8.0),
                               child: SliderButton(
                                 action: (){
-                                  Navigator.push(context, MaterialPageRoute(builder: (BuildContext context)=>BookingForm(cabsCount: noc,)));
+                                  Navigator.push(context, MaterialPageRoute(builder: (BuildContext context)=>BookingForm(cabsCount: noc,originSame: originSame,)));
                                 },
                                 icon: Center(
                                   child: Icon(
