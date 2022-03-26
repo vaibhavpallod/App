@@ -15,6 +15,8 @@ class Login extends StatefulWidget {
   _LoginState createState() => _LoginState();
 }
 
+// String _currentSelectedCustomerType;
+
 // double _height;
 // double _width;
 // double _pixelRatio;
@@ -26,24 +28,8 @@ class Login extends StatefulWidget {
 // double long;
 // String pictRegID;
 // String city;
-// String _currentSelectedCustomerType;
-
+// signInWithGoogle() async {
 class _LoginState extends State<Login> {
-  String phoneNumber;
-  final _formKey = GlobalKey<FormState>();
-  bool _obscureText = true;
-  FirebaseFirestore firestore = FirebaseFirestore.instance;
-  CollectionReference users = FirebaseFirestore.instance.collection('users');
-  final storage = const FlutterSecureStorage();
-  String countryCode = "+91";
-  double _height, _width, _pixelRatio;
-  bool pict = false;
-  bool load = false;
-  FirebaseAuth auth;
-
-  TextEditingController phoneController = TextEditingController();
-
-  // signInWithGoogle() async {
   //   setState(() {
   //     load = true;
   //   });
@@ -130,7 +116,30 @@ class _LoginState extends State<Login> {
   //     Fluttertoast.showToast(msg: 'Something went wrong');
   //     print(e.toString());
   //   }
+  String phoneNumber;
+  final _formKey = GlobalKey<FormState>();
+  bool _obscureText = true;
+  FirebaseFirestore firestore = FirebaseFirestore.instance;
+  CollectionReference users = FirebaseFirestore.instance.collection('users');
+  final storage = const FlutterSecureStorage();
+  String countryCode = "+91";
+  double _height, _width, _pixelRatio;
+  bool pict = false;
+  bool load = false;
+
+  FirebaseAuth auth;
+
+  TextEditingController phoneController = TextEditingController();
+
   // }
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    // FirebaseAuth mAuth = FirebaseAuth.;
+
+    getLogIn();
+  }
 
   login() async {
     auth = FirebaseAuth.instance;
@@ -198,13 +207,6 @@ class _LoginState extends State<Login> {
         height: 1.0,
         color: Colors.black26.withOpacity(.2),
       );
-
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    getLogIn();
-  }
 
   getLogIn() async {}
 
