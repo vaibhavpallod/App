@@ -6,6 +6,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:uber_hacktag_group_booking/Driver/DriverHomePage.dart';
+import 'package:uber_hacktag_group_booking/Driver/Requests.dart';
 import 'package:uber_hacktag_group_booking/pages/MainHomePage.dart';
 
 import 'Enter/login.dart';
@@ -78,7 +79,9 @@ class App extends StatelessWidget {
         if (type == "User") {
           return MainHomePage();
         } else {
+          // change this to driverHomepage afterwords
           return DriverHomePage();
+          return Requests();
         }
       }
     } else {

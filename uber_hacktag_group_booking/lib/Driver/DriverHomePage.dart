@@ -2,8 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
+import 'package:slider_button/slider_button.dart';
+import 'package:uber_hacktag_group_booking/Driver/Requests.dart';
 import 'package:uber_hacktag_group_booking/Enter/login.dart';
 import 'package:uber_hacktag_group_booking/konstants/loaders.dart';
 
@@ -37,7 +40,6 @@ class _DriverHomePageState extends State<DriverHomePage> {
   void _onMapCreated(GoogleMapController controller) {
     // 18.602464, 73.781616
     // 18.590014, 73.747523
-
 
     // 18.636867, 73.768552
     setState(() {
@@ -141,174 +143,91 @@ class _DriverHomePageState extends State<DriverHomePage> {
                     onMapCreated: _onMapCreated,
                     markers: _markers,
                   ),
-                  // Align(
-                  //   alignment: Alignment.bottomCenter,
-                  //   child: Padding(
-                  //     padding: const EdgeInsets.symmetric(
-                  //         horizontal: 20, vertical: 8),
-                  //     child: Material(
-                  //       elevation: 15,
-                  //       borderRadius: BorderRadius.all(Radius.circular(10)),
-                  //       child: Container(
-                  //         decoration: BoxDecoration(
-                  //           border: Border.all(color: Colors.grey, width: 1),
-                  //           gradient: LinearGradient(
-                  //               colors: [
-                  //                 Color(0x99000000),
-                  //                 Color(0xFF000000)
-                  //               ]
-                  //           ),
-                  //           borderRadius: BorderRadius.all(Radius.circular(20)),
-                  //         ),
-                  //         height: 200,
-                  //         width: MediaQuery
-                  //             .of(context)
-                  //             .size
-                  //             .width,
-                  //         child: Column(
-                  //           children: [
-                  //             Padding(
-                  //               padding: const EdgeInsets.all(12.0),
-                  //               child: Text('Group Bookings',
-                  //                 style: GoogleFonts.workSans(
-                  //                     color: Colors.white, fontSize: 18),),
-                  //             ),
-                  //             SizedBox(height: 5,),
-                  //             Row(
-                  //               children: [
-                  //                 Padding(
-                  //                   padding: const EdgeInsets.symmetric(
-                  //                       horizontal: 10),
-                  //                   child: Text('Number of Cabs',
-                  //                     style: GoogleFonts.workSans(color: Colors.white,
-                  //                         fontSize: 14,
-                  //                         fontWeight: FontWeight.w300),),
-                  //                 ),
-                  //                 SizedBox(height: 5,),
-                  //                 Expanded(
-                  //                   child: Padding(
-                  //                     padding: const EdgeInsets.symmetric(
-                  //                         horizontal: 10),
-                  //                     child: NumberPicker(
-                  //                       haptics: true,
-                  //                       value: noc,
-                  //                       maxValue: 11,
-                  //                       minValue: 2,
-                  //                       axis: Axis.horizontal,
-                  //                       itemWidth: 50,
-                  //                       selectedTextStyle: GoogleFonts.workSans(
-                  //                           color: Colors.white,
-                  //                           fontSize: 20,
-                  //                           fontWeight: FontWeight.w300),
-                  //                       textStyle: GoogleFonts.workSans(
-                  //                           color: Color(0x99FFFFFF),
-                  //                           fontSize: 15,
-                  //                           fontWeight: FontWeight.w300),
-                  //                       onChanged: (int val) {
-                  //                         setState(() {
-                  //                           noc = val;
-                  //                         });
-                  //                       },
-                  //                     ),
-                  //                   ),
-                  //                 )
-                  //               ],
-                  //             ),
-                  //             Row(
-                  //               children: [
-                  //                 Padding(
-                  //                   padding: const EdgeInsets.symmetric(
-                  //                       horizontal: 10),
-                  //                   child: Text('Same', style: GoogleFonts.workSans(
-                  //                       color: Colors.white,
-                  //                       fontSize: 14,
-                  //                       fontWeight: FontWeight.w300),),
-                  //                 ),
-                  //                 Spacer(),
-                  //                 Padding(
-                  //                   padding: const EdgeInsets.symmetric(
-                  //                       horizontal: 8),
-                  //                   child: ToggleSwitch(
-                  //                     totalSwitches: 2,
-                  //                     initialLabelIndex: 0,
-                  //                     labels: [
-                  //                       'Origin',
-                  //                       'End'
-                  //                     ],
-                  //                     minHeight: 30,
-                  //                     onToggle: (index) {
-                  //                       if (index == 0) {
-                  //                         originSame = true;
-                  //                       } else {
-                  //                         originSame = false;
-                  //                       }
-                  //                     },
-                  //                     inactiveBgColor: Colors.white,
-                  //                     activeBgColor: [
-                  //                       Colors.orange
-                  //                     ],
-                  //                     customTextStyles: [
-                  //                       GoogleFonts.workSans(color: Colors.black,
-                  //                           fontSize: 14,
-                  //                           fontWeight: FontWeight.w300),
-                  //                       GoogleFonts.workSans(color: Colors.black,
-                  //                           fontSize: 14,
-                  //                           fontWeight: FontWeight.w400),
-                  //                     ],
-                  //                   ),
-                  //                 )
-                  //               ],
-                  //             ),
-                  //             // Expanded(
-                  //             //   child: Container(
-                  //             //     decoration: BoxDecoration(
-                  //             //       gradient: LinearGradient(
-                  //             //         begin: Alignment.topCenter,
-                  //             //         end: Alignment.bottomCenter,
-                  //             //         stops: [
-                  //             //           0,0.5,1
-                  //             //         ],
-                  //             //         colors: [
-                  //             //           Colors.redAccent.shade100,
-                  //             //           Colors.redAccent,
-                  //             //           Colors.redAccent.shade100,
-                  //             //         ]
-                  //             //       )
-                  //             //     ),
-                  //             //   ),
-                  //             // )
-                  //             SizedBox(height: 5,),
-                  //             Expanded(
-                  //               child: Padding(
-                  //                 padding: const EdgeInsets.all(8.0),
-                  //                 child: SliderButton(
-                  //                   action: () {
-                  //                     Navigator.push(context, MaterialPageRoute(
-                  //                         builder: (BuildContext context) =>
-                  //                             BookingForm(cabsCount: noc,
-                  //                               originSame: originSame,)));
-                  //                   },
-                  //                   icon: Center(
-                  //                     child: Icon(
-                  //                       Icons.local_taxi,
-                  //                       color: Colors.black,
-                  //                     ),
-                  //                   ),
-                  //                   label: Text(
-                  //                     "Slide to Book",
-                  //                     style: GoogleFonts.workSans(color: Colors.white,
-                  //                         fontSize: 14,
-                  //                         fontWeight: FontWeight.w400),
-                  //                   ),
-                  //                 ),
-                  //               ),
-                  //             )
-                  //           ],
-                  //         ),
-                  //       ),
-                  //     ),
-                  //   ),
-                  // )
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 8),
+                      child: Material(
+                        // color: Colors.white,
+                        elevation: 15,
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey, width: 1),
+                            gradient: LinearGradient(
+                                colors: [Color(0x99000000), Color(0xFF000000)]),
+                            borderRadius: BorderRadius.all(Radius.circular(20)),
+                          ),
+                          height: 120,
+                          width: MediaQuery.of(context).size.width,
+                          child: Column(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Text(
+                                  'Requests',
+                                  style: GoogleFonts.workSans(
+                                      color: Colors.white, fontSize: 18),
+                                ),
+                              ),
+                              SizedBox(
+                                height: 5,
+                              ),
+                              // Expanded(
+                              //   child: Container(
+                              //     decoration: BoxDecoration(
+                              //       gradient: LinearGradient(
+                              //         begin: Alignment.topCenter,
+                              //         end: Alignment.bottomCenter,
+                              //         stops: [
+                              //           0,0.5,1
+                              //         ],
+                              //         colors: [
+                              //           Colors.redAccent.shade100,
+                              //           Colors.redAccent,
+                              //           Colors.redAccent.shade100,
+                              //         ]
+                              //       )
+                              //     ),
+                              //   ),
+                              // )
+                              SizedBox(
+                                height: 5,
+                              ),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: SliderButton(
+                                    action: () {
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (BuildContext context) =>
+                                                  Requests()));
+                                    },
+                                    icon: Center(
+                                      child: Icon(
+                                        Icons.local_taxi,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                    label: Text(
+                                      "Slide to Get Requests",
+                                      style: GoogleFonts.workSans(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w400),
+                                    ),
+                                  ),
+                                ),
+                              )
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
                 ],
               ),
             ),
