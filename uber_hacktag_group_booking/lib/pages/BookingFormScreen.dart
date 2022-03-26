@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:uber_hacktag_group_booking/konstants/loaders.dart';
 import 'package:uuid/uuid.dart';
-import 'package:geocoder/geocoder.dart';
+import 'package:geocode/geocode.dart';
 import '../Enter/place_service.dart';
 import '../address_search.dart';
 
@@ -31,7 +31,9 @@ class _BookingFormState extends State<BookingForm> {
   List<bool>emailEmpty=[];
   List<bool>phoneEmpty=[];
   List<bool>locEmpty=[];
+  List<Coordinates>crds=[];
   bool lEmpty=false;
+  Coordinates cr;
   FirebaseFirestore firestore = FirebaseFirestore.instance;
   DatabaseReference requestPool =
   FirebaseDatabase.instance.ref().child('requestPool');
@@ -82,15 +84,16 @@ class _BookingFormState extends State<BookingForm> {
 
 
   determineCost()async{
+    GeoCode geoCode = GeoCode();
     cost1=[];
     cost=0;
-    var src = await Geocoder.local.findAddressesFromQuery(_lController.text.trim());
-    Coordinates c = src.first.coordinates;
+    Coordinates c = await geoCode.forwardGeocoding(address:_lController.text.trim());
+    cr=c;
     for(int i=0;i<widget.cabsCount;i++){
-      var addresses = await Geocoder.local.findAddressesFromQuery(_locationController[i].text.trim());
-      Coordinates coordinates = addresses.first.coordinates;
+      Coordinates coordinates  = await geoCode.forwardGeocoding(address:_locationController[i].text.trim());
       int res=(calculateDistance(c.latitude, c.longitude, coordinates.latitude, coordinates.longitude)*5).ceil();
       cost1.add(res);
+      crds.add(coordinates);
       cost=cost+res;
     }
   }
@@ -108,7 +111,12 @@ class _BookingFormState extends State<BookingForm> {
           'source': _lController.text.trim(),
           'destination':_locationController[i].text.trim(),
           'type':selectedCab[i],
-          'cost':cost1[i]
+          'cost':cost1[i],
+          'sourceLatitude':cr.latitude,
+          'sourceLongitude':cr.longitude,
+          'destinationLatitude':crds[i].latitude,
+          'destinationLongitude':crds[i].longitude,
+          'status':'Finding',
         };
       }else{
         ride = {
@@ -118,7 +126,12 @@ class _BookingFormState extends State<BookingForm> {
           'destination': _lController.text.trim(),
           'source':_locationController[i].text.trim(),
           'type':selectedCab[i],
-          'cost':cost1[i]
+          'cost':cost1[i],
+          'sourceLatitude':crds[i].latitude,
+          'sourceLongitude':crds[i].longitude,
+          'destinationLatitude':cr.latitude,
+          'destinationLongitude':cr.longitude,
+          'status':'Finding',
         };
       }
       await requestPool.child(randId).set(ride);

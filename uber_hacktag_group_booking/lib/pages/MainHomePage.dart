@@ -43,15 +43,20 @@ class _MainHomePageState extends State<MainHomePage> {
 
   Future<LocationData> getLocation() async {
     var pinLocationIcon = await BitmapDescriptor.fromAssetImage(
-        ImageConfiguration(devicePixelRatio: 2.5),
-        'assets/destination_map_marker.png');
+        ImageConfiguration(devicePixelRatio: 2.5,size: Size.fromHeight(12)),
+        'images/pin.png');
     location = await currentLocation.getLocation();
+    _markers.add(Marker(markerId: MarkerId('Home'),
+      position: LatLng(location.latitude ?? 0.0, location.longitude ?? 0.0),
+      icon: pinLocationIcon
+    ));
     currentLocation.onLocationChanged.listen((LocationData loc) {
       _markers = {};
       print(loc.latitude);
       print(loc.longitude);
         _markers.add(Marker(markerId: MarkerId('Home'),
             position: LatLng(loc.latitude ?? 0.0, loc.longitude ?? 0.0),
+          icon: pinLocationIcon
         ));
     });
     return location;
@@ -74,7 +79,7 @@ class _MainHomePageState extends State<MainHomePage> {
               Navigator.pushAndRemoveUntil(context, MaterialPageRoute(
                 builder: (BuildContext context) => Login(),), (route) => false)
             },
-            child: Icon(Icons.arrow_back, color: Colors.black),
+            child: Icon(Icons.person, color: Colors.black),
           ),
         ),
         backgroundColor: Colors.transparent,
