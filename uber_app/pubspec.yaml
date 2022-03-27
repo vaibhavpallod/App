@@ -70,9 +70,10 @@ dependencies:
   slider_button: ^2.0.0
   toggle_switch: ^1.4.0
   firebase_database: ^9.0.8
+  geocode: ^1.0.1
   step_progress_indicator: ^1.0.2
   geocoder: ^0.2.1
-
+  http: ^0.13.4
 
 dev_dependencies:
   flutter_test:

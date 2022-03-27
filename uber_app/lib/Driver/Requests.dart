@@ -2,6 +2,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
 import 'package:location/location.dart';
 
 import '../konstants/loaders.dart';
@@ -220,9 +221,9 @@ class _RequestsState extends State<Requests>
                                 )
                               : Container(
                                   child: ElevatedButton(
-
                                     style: ButtonStyle(
-                                      elevation: MaterialStateProperty.all(10.0),
+                                      elevation:
+                                          MaterialStateProperty.all(10.0),
                                       shape: MaterialStateProperty.all<
                                           RoundedRectangleBorder>(
                                         RoundedRectangleBorder(
@@ -238,7 +239,10 @@ class _RequestsState extends State<Requests>
                                           MaterialStateProperty.all(
                                               Colors.grey.shade800),
                                     ),
-                                    child: Text('track',style: TextStyle(color: Colors.white),),
+                                    child: Text(
+                                      'track',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
                                   ),
                                 ),
                           // : Row(
@@ -275,33 +279,44 @@ class _RequestsState extends State<Requests>
           );
   }
 
-  void _acceptRequest(Map<dynamic, dynamic> request, int index) {
+  Future<void> _acceptRequest(Map<dynamic, dynamic> request, int index) async {
     Map<dynamic, dynamic> temprequest = request;
 
     String requestKey = mofKeys[index];
     // temprequest.remove('distance');
     // temprequest['distance']=50000;
-    temprequest['status'] = 'Booked';
+    temprequest['status'] = 'Booking';
     temprequest['driverLatitude'] = widget.location.latitude;
     temprequest['driverLongitude'] = widget.location.longitude;
-    // setState(() {
-    //   load=true;
-    // });
+    var email=request['passengerEmail'];
+    setState(() {
+      load=true;
+    });
+    var res = await http.get(Uri.parse("https://us-central1-uber-hacktag-group-booking.cloudfunctions.net/sendMail?dest=$email&uid=$requestKey"));
+    print(res.body);
     databaseReference
         .child('requestPool')
         .child(requestKey)
         .set(temprequest)
         .whenComplete(() => {
               setState(() {
-                // load=false;
+                load=false;
                 _showMessege("Accepted");
+
               }),
             });
+  }
 
-    // print("_acceptRequest" + " "+ mofKeys.toString() +'\n\n');
-    // mofRequests.forEach((element) {
-    //   print(element);
+  // String message = "This is a test message!";
+
+  Future<void> _sendEmail(String message, List<String> recipents) async {
+    // _sendSMS(message, recipents);
+    // String _result = await sendSMS(message: message, recipients: recipents)
+    //     .catchError((onError) {
+    //   print(onError);
     // });
+    // print(_result);
+
   }
 
   _showMessege(String msg) {
