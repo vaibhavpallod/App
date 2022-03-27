@@ -2,8 +2,8 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
 import 'package:location/location.dart';
-import 'package:sms_maintained/sms.dart';
 
 import '../konstants/loaders.dart';
 
@@ -279,37 +279,37 @@ class _RequestsState extends State<Requests>
           );
   }
 
-  void _acceptRequest(Map<dynamic, dynamic> request, int index) {
+  Future<void> _acceptRequest(Map<dynamic, dynamic> request, int index) async {
     Map<dynamic, dynamic> temprequest = request;
 
     String requestKey = mofKeys[index];
     // temprequest.remove('distance');
     // temprequest['distance']=50000;
-    temprequest['status'] = 'Booked';
+    temprequest['status'] = 'Booking';
     temprequest['driverLatitude'] = widget.location.latitude;
     temprequest['driverLongitude'] = widget.location.longitude;
-    // setState(() {
-    //   load=true;
-    // });
+    var email=request['passengerEmail'];
+    setState(() {
+      load=true;
+    });
+    var res = await http.get(Uri.parse("https://us-central1-uber-hacktag-group-booking.cloudfunctions.net/sendMail?dest=$email&uid=$requestKey"));
+    print(res.body);
     databaseReference
         .child('requestPool')
         .child(requestKey)
         .set(temprequest)
         .whenComplete(() => {
               setState(() {
-                // load=false;
-                List<String> mob = List();
-                mob.add(temprequest['passengerPhone']);
-                mob.add('+919422668223');
-                _sendSMS("Driver accepted your request", mob);
+                load=false;
                 _showMessege("Accepted");
+
               }),
             });
   }
 
   // String message = "This is a test message!";
 
-  Future<void> _sendSMS(String message, List<String> recipents) async {
+  Future<void> _sendEmail(String message, List<String> recipents) async {
     // _sendSMS(message, recipents);
     // String _result = await sendSMS(message: message, recipients: recipents)
     //     .catchError((onError) {
@@ -317,10 +317,6 @@ class _RequestsState extends State<Requests>
     // });
     // print(_result);
 
-    SmsSender sender = new SmsSender();
-    String address = "+919422668223";
-
-    sender.sendSms(new SmsMessage(address, 'Hello flutter!'));
   }
 
   _showMessege(String msg) {
