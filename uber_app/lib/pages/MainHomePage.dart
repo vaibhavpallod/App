@@ -54,8 +54,6 @@ class _MainHomePageState extends State<MainHomePage> {
     ));
     currentLocation.onLocationChanged.listen((LocationData loc) {
       _markers = {};
-      print(loc.latitude);
-      print(loc.longitude);
         _markers.add(Marker(markerId: MarkerId('Home'),
             position: LatLng(loc.latitude ?? 0.0, loc.longitude ?? 0.0),
           icon: pinLocationIcon
