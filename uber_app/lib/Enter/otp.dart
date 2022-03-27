@@ -130,6 +130,7 @@ class _OTPScreenState extends State<OTPScreen> {
                               {
                                 print(map),
                                 await storage.write(key: 'userType', value: 'User'),
+                                await storage.write(key: 'name', value: map[userCredential.user.uid]['name']),
                                 Navigator.pushAndRemoveUntil(
                                     context,
                                     MaterialPageRoute(
@@ -138,6 +139,8 @@ class _OTPScreenState extends State<OTPScreen> {
                                     (route) => false),
                               }else{
                               await storage.write(key: 'userType', value: 'Driver'),
+                              await storage.write(key: 'name', value: map[userCredential.user.uid]['name']),
+
                               Navigator.pushAndRemoveUntil(
                                   context,
                                   MaterialPageRoute(
