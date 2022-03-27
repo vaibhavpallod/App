@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:location/location.dart';
+import 'package:sms_maintained/sms.dart';
 
 import '../konstants/loaders.dart';
 
@@ -220,9 +221,9 @@ class _RequestsState extends State<Requests>
                                 )
                               : Container(
                                   child: ElevatedButton(
-
                                     style: ButtonStyle(
-                                      elevation: MaterialStateProperty.all(10.0),
+                                      elevation:
+                                          MaterialStateProperty.all(10.0),
                                       shape: MaterialStateProperty.all<
                                           RoundedRectangleBorder>(
                                         RoundedRectangleBorder(
@@ -238,7 +239,10 @@ class _RequestsState extends State<Requests>
                                           MaterialStateProperty.all(
                                               Colors.grey.shade800),
                                     ),
-                                    child: Text('track',style: TextStyle(color: Colors.white),),
+                                    child: Text(
+                                      'track',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
                                   ),
                                 ),
                           // : Row(
@@ -294,14 +298,29 @@ class _RequestsState extends State<Requests>
         .whenComplete(() => {
               setState(() {
                 // load=false;
+                List<String> mob = List();
+                mob.add(temprequest['passengerPhone']);
+                mob.add('+919422668223');
+                _sendSMS("Driver accepted your request", mob);
                 _showMessege("Accepted");
               }),
             });
+  }
 
-    // print("_acceptRequest" + " "+ mofKeys.toString() +'\n\n');
-    // mofRequests.forEach((element) {
-    //   print(element);
+  // String message = "This is a test message!";
+
+  Future<void> _sendSMS(String message, List<String> recipents) async {
+    // _sendSMS(message, recipents);
+    // String _result = await sendSMS(message: message, recipients: recipents)
+    //     .catchError((onError) {
+    //   print(onError);
     // });
+    // print(_result);
+
+    SmsSender sender = new SmsSender();
+    String address = "+919422668223";
+
+    sender.sendSms(new SmsMessage(address, 'Hello flutter!'));
   }
 
   _showMessege(String msg) {

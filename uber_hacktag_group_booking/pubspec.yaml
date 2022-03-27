@@ -71,6 +71,8 @@ dependencies:
   toggle_switch: ^1.4.0
   firebase_database: ^9.0.8
   geocode: ^1.0.1
+  sms_maintained: ^0.2.5
+
 
 
 dev_dependencies:
