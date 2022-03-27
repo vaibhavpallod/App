@@ -42,6 +42,12 @@ class _UserProfileState extends State<UserProfile> {
     DataSnapshot ds=await dr.get();
     Map map=ds.value as Map;
     List<String>ridesID=[];
+    if(map==null||map.length==0) {
+      setState(() {
+        load=false;
+      });
+      return;
+    }
     map.keys.forEach((element) {
       ridesID.add(element);
     });
@@ -78,7 +84,7 @@ class _UserProfileState extends State<UserProfile> {
             )
           ],
         ),
-        body: load?spinkit:ListView.builder(itemBuilder: (BuildContext context,int pos){
+        body: load?spinkit:l.isEmpty?Center(child:Text('No Travel History found',style: GoogleFonts.workSans(fontSize: 20,fontWeight: FontWeight.w500),)):ListView.builder(itemBuilder: (BuildContext context,int pos){
           return Padding(
             padding: const EdgeInsets.all(4.0),
             child: GestureDetector(
