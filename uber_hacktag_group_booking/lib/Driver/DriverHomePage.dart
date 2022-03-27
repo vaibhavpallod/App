@@ -18,7 +18,7 @@ class DriverHomePage extends StatefulWidget {
 class _DriverHomePageState extends State<DriverHomePage> {
   GoogleMapController _controller;
   Location currentLocation = Location();
-  Set<Marker> _markers = {};
+  Set<Marker> _markers = {}, _currentMarker;
   int noc = 2;
   bool load = true;
   LocationData location;
@@ -42,60 +42,21 @@ class _DriverHomePageState extends State<DriverHomePage> {
     // 18.590014, 73.747523
 
     // 18.636867, 73.768552
-    setState(() {
-      _markers.add(Marker(
-          icon: mapMarker,
-          markerId: MarkerId('id-1'),
-          position: LatLng(18.602464, 73.781616),
-          infoWindow: InfoWindow(
-            title: 'Rahatani',
-          )));
-      _markers.add(Marker(
-          icon: mapMarker,
-          markerId: MarkerId('id-2'),
-          position: LatLng(18.590014, 73.747523),
-          infoWindow: InfoWindow(
-            title: 'Rahatani',
-          )));
-
-      _markers.add(Marker(
-          icon: mapMarker,
-          markerId: MarkerId('id-3'),
-          position: LatLng(18.644837, 73.769367),
-          infoWindow: InfoWindow(
-            title: 'Nigdi',
-          )));
-
-      _markers.add(Marker(
-          icon: mapMarker,
-          markerId: MarkerId('id-4'),
-          position: LatLng(18.638168, 73.791211),
-          infoWindow: InfoWindow(
-            title: 'Rahatani',
-          )));
-
-      _markers.add(Marker(
-          icon: mapMarker,
-          markerId: MarkerId('id-5'),
-          position: LatLng(18.636867, 73.768552),
-          infoWindow: InfoWindow(
-            title: 'Railway Station',
-          )));
-      // 18.644837, 73.769367
-    });
   }
 
   void getLocation() async {
     location = await currentLocation.getLocation();
     currentLocation.onLocationChanged.listen((LocationData loc) {
-      _markers = {};
+      // _currentMarker = {};
+
+      _markers.add(Marker(
+          markerId: MarkerId('Home'),
+          position: LatLng(loc.latitude ?? 0.0, loc.longitude ?? 0.0)));
       print(loc.latitude);
       print(loc.longitude);
+      if(mounted)
       setState(() {
         load = false;
-        _markers.add(Marker(
-            markerId: MarkerId('Home'),
-            position: LatLng(loc.latitude ?? 0.0, loc.longitude ?? 0.0)));
       });
     });
   }
@@ -204,7 +165,8 @@ class _DriverHomePageState extends State<DriverHomePage> {
                                           context,
                                           MaterialPageRoute(
                                               builder: (BuildContext context) =>
-                                                  Requests()));
+                                                  Requests(
+                                                      location: location)));
                                     },
                                     icon: Center(
                                       child: Icon(
@@ -236,6 +198,49 @@ class _DriverHomePageState extends State<DriverHomePage> {
 
   Future<void> serCustomMarker() async {
     mapMarker = await BitmapDescriptor.fromAssetImage(
-        ImageConfiguration(), 'images/markerIcon.png');
+        ImageConfiguration(devicePixelRatio: 2.5, size: Size.fromHeight(12)),
+        'images/markerIcon.png');
+
+    setState(() {
+      _markers.add(Marker(
+          icon: mapMarker,
+          markerId: MarkerId('id-1'),
+          position: LatLng(18.602464, 73.781616),
+          infoWindow: InfoWindow(
+            title: 'Rahatani',
+          )));
+      _markers.add(Marker(
+          icon: mapMarker,
+          markerId: MarkerId('id-2'),
+          position: LatLng(18.590014, 73.747523),
+          infoWindow: InfoWindow(
+            title: 'Rahatani',
+          )));
+
+      _markers.add(Marker(
+          icon: mapMarker,
+          markerId: MarkerId('id-3'),
+          position: LatLng(18.644837, 73.769367),
+          infoWindow: InfoWindow(
+            title: 'Nigdi',
+          )));
+
+      _markers.add(Marker(
+          icon: mapMarker,
+          markerId: MarkerId('id-4'),
+          position: LatLng(18.638168, 73.791211),
+          infoWindow: InfoWindow(
+            title: 'Rahatani',
+          )));
+
+      _markers.add(Marker(
+          icon: mapMarker,
+          markerId: MarkerId('id-5'),
+          position: LatLng(18.636867, 73.768552),
+          infoWindow: InfoWindow(
+            title: 'Railway Station',
+          )));
+      // 18.644837, 73.769367
+    });
   }
 }
