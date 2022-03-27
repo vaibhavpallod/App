@@ -12,6 +12,7 @@ import 'package:location/location.dart';
 import 'package:numberpicker/numberpicker.dart';
 import 'package:slider_button/slider_button.dart';
 import 'package:uber_hacktag_group_booking/pages/BookingFormScreen.dart';
+import 'package:uber_hacktag_group_booking/pages/UserProfile.dart';
 
 class MainHomePage extends StatefulWidget {
   @override
@@ -25,6 +26,7 @@ class _MainHomePageState extends State<MainHomePage> {
   Location currentLocation = Location();
   Set<Marker> _markers = {};
   int noc = 2;
+  String name;
   bool load = true;
   LocationData location;
   bool originSame = true;
@@ -37,11 +39,11 @@ class _MainHomePageState extends State<MainHomePage> {
     print('page' + "Userpage");
 
     super.initState();
-    getLocation();
   }
 
 
   Future<LocationData> getLocation() async {
+    name=await storage.read(key: 'name');
     var pinLocationIcon = await BitmapDescriptor.fromAssetImage(
         ImageConfiguration(devicePixelRatio: 2.5,size: Size.fromHeight(12)),
         'images/pin.png');
@@ -68,20 +70,23 @@ class _MainHomePageState extends State<MainHomePage> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        leading: Padding( // --> Custom Back Button
-          padding: const EdgeInsets.all(8.0),
-          child: FloatingActionButton(
-            backgroundColor: Colors.white,
-            mini: true,
-            onPressed: () async =>
-            {
-              await storage.deleteAll(),
-              Navigator.pushAndRemoveUntil(context, MaterialPageRoute(
-                builder: (BuildContext context) => Login(),), (route) => false)
-            },
-            child: Icon(Icons.person, color: Colors.black),
+        actions: [
+          Padding( // --> Custom Back Button
+            padding: const EdgeInsets.all(8.0),
+            child: FloatingActionButton(
+              backgroundColor: Colors.white,
+              mini: true,
+              onPressed: () async =>
+              {
+                // await storage.deleteAll(),
+                // Navigator.pushAndRemoveUntil(context, MaterialPageRoute(
+                //   builder: (BuildContext context) => Login(),), (route) => false)
+                Navigator.push(context, MaterialPageRoute(builder: (BuildContext context)=>UserProfile(name: name,)))
+              },
+              child: Icon(Icons.person, color: Colors.black),
+            ),
           ),
-        ),
+        ],
         backgroundColor: Colors.transparent,
         shadowColor: Colors.transparent,
       ),
@@ -122,7 +127,7 @@ class _MainHomePageState extends State<MainHomePage> {
                       horizontal: 20, vertical: 8),
                   child: Material(
                     elevation: 15,
-                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                    borderRadius: BorderRadius.all(Radius.circular(20)),
                     child: Container(
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.grey, width: 1),

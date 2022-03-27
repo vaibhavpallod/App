@@ -1,14 +1,16 @@
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:uber_hacktag_group_booking/konstants/loaders.dart';
 import 'package:uuid/uuid.dart';
-import 'package:geocode/geocode.dart';
 import '../Enter/place_service.dart';
 import '../address_search.dart';
+import 'package:geocoder/geocoder.dart';
 
 class BookingForm extends StatefulWidget {
   int cabsCount;
@@ -21,6 +23,7 @@ class BookingForm extends StatefulWidget {
 
 class _BookingFormState extends State<BookingForm> {
   List<String> selectedCab = [];
+  int cnt=0;
   List<TextEditingController> _locationController = [];
   List<TextEditingController> _nameController = [];
   List<TextEditingController> _emailController = [];
@@ -84,14 +87,15 @@ class _BookingFormState extends State<BookingForm> {
 
 
   determineCost()async{
-    GeoCode geoCode = GeoCode();
     cost1=[];
     cost=0;
-    Coordinates c = await geoCode.forwardGeocoding(address:_lController.text.trim());
+    var src = await Geocoder.local.findAddressesFromQuery(_lController.text.trim());
+    Coordinates c = src.first.coordinates;
     cr=c;
     for(int i=0;i<widget.cabsCount;i++){
-      Coordinates coordinates  = await geoCode.forwardGeocoding(address:_locationController[i].text.trim());
-      int res=(calculateDistance(c.latitude, c.longitude, coordinates.latitude, coordinates.longitude)*5).ceil();
+      var src1 = await Geocoder.local.findAddressesFromQuery(_locationController[i].text.trim());
+      Coordinates coordinates  = await src1.first.coordinates;
+      int res=(calculateDistance(c.latitude, c.longitude, coordinates.latitude, coordinates.longitude)*20).ceil();
       cost1.add(res);
       crds.add(coordinates);
       cost=cost+res;
@@ -99,9 +103,13 @@ class _BookingFormState extends State<BookingForm> {
   }
 
   addAllRidesToRequestPool()async{
+    User user=await FirebaseAuth.instance.currentUser;
+    var uuid = const Uuid();
+    var randId = uuid.v1();
+    DatabaseReference userRequest =
+    FirebaseDatabase.instance.ref().child('allusers').child(user.uid).child('rides').child(randId);
     for(int i=0;i<widget.cabsCount;i++){
       Map<String, dynamic> ride;
-      var uuid = const Uuid();
       var randId = uuid.v1();
       if(widget.originSame) {
         ride = {
@@ -134,11 +142,37 @@ class _BookingFormState extends State<BookingForm> {
           'status':'Finding',
         };
       }
-      await requestPool.child(randId).set(ride);
-      setState(() {
-        load=false;
-      });
+      await requestPool.child(randId).set(ride).whenComplete(() => cnt++);
+      await userRequest.child(randId).set(ride);
     }
+    Map<String,dynamic>map;
+    if(widget.originSame){
+      map={
+        'source':_lController.text.trim(),
+        'sourceLatitude':cr.latitude,
+        'sourceLongitude':cr.longitude,
+        'dateTime':DateTime.now().millisecondsSinceEpoch,
+        'numberOfCabs':widget.cabsCount
+      };
+    }else{
+      map={
+        'destination': _lController.text.trim(),
+        'destinationLatitude':cr.latitude,
+        'destinationLongitude':cr.longitude,
+        'dateTime':DateTime.now().millisecondsSinceEpoch,
+        'numberOfCabs':widget.cabsCount
+      };
+    }
+    await userRequest.update(map);
+    if(cnt==widget.cabsCount){
+      Fluttertoast.showToast(msg: 'Cabs confirmed');
+      Navigator.pop(context);
+    }else{
+      Fluttertoast.showToast(msg: 'Please try again');
+    }
+    setState(() {
+      load=false;
+    });
   }
 
 

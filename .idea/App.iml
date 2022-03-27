@@ -6,6 +6,9 @@
       <excludeFolder url="file://$MODULE_DIR$/uber_hacktag_group_booking/build" />
       <excludeFolder url="file://$MODULE_DIR$/uber_hacktag_group_booking/.dart_tool" />
       <excludeFolder url="file://$MODULE_DIR$/uber_hacktag_group_booking/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/uber_app/build" />
+      <excludeFolder url="file://$MODULE_DIR$/uber_app/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/uber_app/.dart_tool" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

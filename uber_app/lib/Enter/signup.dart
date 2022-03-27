@@ -197,8 +197,9 @@ class _SignUpState extends State<SignUp> {
           .whenComplete(() async => {
                 await storage.write(key: 'loginstate', value: 'true'),
                 await storage.write(key: 'userType', value: 'user'),
+        await storage.write(key: 'name', value: name),
 
-                setState(() {
+        setState(() {
                   load = false;
                 }),
                 // await FlutterSecureStorage
