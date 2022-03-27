@@ -1,10 +1,15 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:location/location.dart';
 
 import '../konstants/loaders.dart';
 
 class Requests extends StatefulWidget {
-  const Requests({Key key}) : super(key: key);
+  LocationData location;
+
+  Requests({this.location});
 
   @override
   _RequestsState createState() => _RequestsState();
@@ -18,12 +23,14 @@ class _RequestsState extends State<Requests>
   Map<String, int> recyclerCounts;
   DatabaseReference databaseReference = FirebaseDatabase.instance.ref();
   List<Map<dynamic, dynamic>> mofRequests;
+  List<String> mofKeys;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     mofRequests = List();
+    mofKeys = List();
     _animationController = AnimationController(
         vsync: this, duration: Duration(milliseconds: 2000));
     _colorTween = ColorTween(begin: Colors.red, end: Colors.black54)
@@ -34,14 +41,30 @@ class _RequestsState extends State<Requests>
   Future<void> getData() async {
     final database = FirebaseDatabase.instance;
     Map<dynamic, dynamic> tempMap = Map();
+    double dist;
     databaseReference
         .child('requestPool')
         .get()
         .then((value) => {
               print("Requests" + value.value.toString()),
               tempMap.addAll(value.value),
+              tempMap.keys.forEach((element) {
+                mofKeys.add(element);
+              }),
+
               tempMap.values.forEach((element) {
                 print(element.toString());
+
+                double destinationLongitude = element['destinationLongitude'];
+                double destinationLatitude = element['destinationLatitude'];
+
+                double distanceInMeters = Geolocator.distanceBetween(
+                    destinationLatitude,
+                    destinationLongitude,
+                    widget.location.latitude,
+                    widget.location.longitude);
+                element['distance'] = distanceInMeters;
+
                 mofRequests.add(element as Map); // = value.value,
               }),
               // value.fo
@@ -119,24 +142,29 @@ class _RequestsState extends State<Requests>
                                   animation: _colorTween,
                                   builder: (context, child) => Row(
                                         children: [
-                                          Text("Lat Long: "),
-                                          // Text(
-                                          //   (double.parse(consumer['unitneed']
-                                          //           .toString()))
-                                          //       .toInt()
-                                          //       .toString(),
-                                          //   style: TextStyle(
-                                          //     color: _colorTween.value,
-                                          //   ),
-                                          // )
+                                          Text("Distance: "),
+                                          Text(
+                                            (int.parse((request['distance'] !=
+                                                                null
+                                                            ? request[
+                                                                'distance']
+                                                            : "0000")
+                                                        .toString()
+                                                        .substring(0, 3))
+                                                    .toString() +
+                                                ' km'),
+                                            style: TextStyle(
+                                              color: _colorTween.value,
+                                            ),
+                                          )
                                         ],
                                       )),
                               Text("Location: " +
                                   request['destination']
                                       .toString()
                                       .substring(15)),
-                              Text("Email: " +
-                                  request['passengerEmail'].toString()),
+                              // Text("Email: " +
+                              //     request['passengerEmail'].toString()),
                               // Text(consumer['status']),
                             ],
                           )),
@@ -151,7 +179,7 @@ class _RequestsState extends State<Requests>
                                     children: [
                                       ElevatedButton(
                                         onPressed: () {
-                                          _acceptRequest(request);
+                                          _acceptRequest(request, index);
                                         },
                                         child: Container(
                                           padding: EdgeInsets.all(0),
@@ -191,7 +219,27 @@ class _RequestsState extends State<Requests>
                                   ),
                                 )
                               : Container(
-                                  child: Text(""),
+                                  child: ElevatedButton(
+
+                                    style: ButtonStyle(
+                                      elevation: MaterialStateProperty.all(10.0),
+                                      shape: MaterialStateProperty.all<
+                                          RoundedRectangleBorder>(
+                                        RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10.0),
+                                          side: BorderSide(
+                                            color: Colors.grey,
+                                            width: 2.0,
+                                          ),
+                                        ),
+                                      ),
+                                      backgroundColor:
+                                          MaterialStateProperty.all(
+                                              Colors.grey.shade800),
+                                    ),
+                                    child: Text('track',style: TextStyle(color: Colors.white),),
+                                  ),
                                 ),
                           // : Row(
                           //     mainAxisSize: MainAxisSize.min,
@@ -227,5 +275,36 @@ class _RequestsState extends State<Requests>
           );
   }
 
-  void _acceptRequest(Map<dynamic, dynamic> request) {}
+  void _acceptRequest(Map<dynamic, dynamic> request, int index) {
+    Map<dynamic, dynamic> temprequest = request;
+
+    String requestKey = mofKeys[index];
+    // temprequest.remove('distance');
+    // temprequest['distance']=50000;
+    temprequest['status'] = 'Booked';
+    temprequest['driverLatitude'] = widget.location.latitude;
+    temprequest['driverLongitude'] = widget.location.longitude;
+    // setState(() {
+    //   load=true;
+    // });
+    databaseReference
+        .child('requestPool')
+        .child(requestKey)
+        .set(temprequest)
+        .whenComplete(() => {
+              setState(() {
+                // load=false;
+                _showMessege("Accepted");
+              }),
+            });
+
+    // print("_acceptRequest" + " "+ mofKeys.toString() +'\n\n');
+    // mofRequests.forEach((element) {
+    //   print(element);
+    // });
+  }
+
+  _showMessege(String msg) {
+    Fluttertoast.showToast(msg: msg);
+  }
 }
