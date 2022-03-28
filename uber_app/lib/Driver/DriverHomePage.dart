@@ -1,13 +1,19 @@
 import 'dart:async';
 
+import 'package:carousel_slider/carousel_slider.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_switch/flutter_switch.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:http/http.dart' as http;
 import 'package:location/location.dart';
 import 'package:uber_hacktag_group_booking/Driver/Requests.dart';
 import 'package:uber_hacktag_group_booking/konstants/loaders.dart';
+
+import '../konstants/Constansts.dart';
 
 class DriverHomePage extends StatefulWidget {
   @override
@@ -15,26 +21,65 @@ class DriverHomePage extends StatefulWidget {
 }
 
 class _DriverHomePageState extends State<DriverHomePage> {
-  GoogleMapController _controller;
+  Completer<GoogleMapController> _controller = Completer();
   Location currentLocation = Location();
   Set<Marker> _markers = {}, _currentMarker;
-  int noc = 2;
   bool load = true;
   LocationData location;
-  bool originSame = true;
-  bool whichSame = true;
+
   var storage = FlutterSecureStorage();
   BitmapDescriptor mapMarker;
   bool _switchValue = true;
+  DatabaseReference databaseReference = FirebaseDatabase.instance.ref();
+  List<Map<dynamic, dynamic>> listOFRequests;
+  List<String> mofKeys;
 
   @override
   void initState() {
     // TODO: implement initState
-
+    listOFRequests = List();
+    mofKeys = List();
     print('page' + "Drivepage");
     super.initState();
+    getRequests();
     serCustomMarker();
-    getLocation();
+  }
+
+  void getRequests() {
+    final database = FirebaseDatabase.instance;
+    Map<dynamic, dynamic> tempMap = Map();
+    double dist;
+    databaseReference
+        .child('requestPool')
+        .get()
+        .then((value) => {
+              print("Requests" + value.value.toString()),
+              tempMap.addAll(value.value),
+              tempMap.keys.forEach((element) {
+                mofKeys.add(element);
+              }),
+
+              tempMap.values.forEach((element) {
+                print(element.toString());
+
+                // double destinationLongitude = element['destinationLongitude'];
+                // double destinationLatitude = element['destinationLatitude'];
+                // double orginLat = element['sourceLatitude'];
+                // double orginLng = element['sourceLongitude'];
+                // double distanceInMeters = Geolocator.distanceBetween(
+                //     orginLat, orginLng, destinationLatitude, destinationLongitude);
+                // element['distance'] = distanceInMeters;
+
+                listOFRequests.add(element as Map); // = value.value,
+              }),
+              // value.fo
+            })
+        .whenComplete(() => {
+              listOFRequests.forEach((element) {
+                print("Requests Map: " + element.toString());
+              }),
+              getDriverLocation(),
+            });
   }
 
   void _onMapCreated(GoogleMapController controller) {
@@ -44,14 +89,14 @@ class _DriverHomePageState extends State<DriverHomePage> {
     // 18.636867, 73.768552
   }
 
-  void getLocation() async {
+  void getDriverLocation() async {
     location = await currentLocation.getLocation();
     setState(() {
       load = false;
     });
     currentLocation.onLocationChanged.listen((LocationData loc) {
       // _currentMarker = {};
-
+      location = loc;
       // _markers.add(Marker(
       //     markerId: MarkerId('Home'),
       //     position: LatLng(loc.latitude ?? 0.0, loc.longitude ?? 0.0)));
@@ -69,28 +114,6 @@ class _DriverHomePageState extends State<DriverHomePage> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: _appBar(AppBar().preferredSize.height),
-      // AppBar(
-      //   leading: Padding(
-      //     // --> Custom Back Button
-      //     padding: const EdgeInsets.all(8.0),
-      //     child: FloatingActionButton(
-      //       backgroundColor: Colors.white,
-      //       mini: true,
-      //       onPressed: () async => {
-      //         await storage.deleteAll(),
-      //         Navigator.pushAndRemoveUntil(
-      //             context,
-      //             MaterialPageRoute(
-      //               builder: (BuildContext context) => Login(),
-      //             ),
-      //             (route) => false)
-      //       },
-      //       child: Icon(Icons.arrow_back, color: Colors.black),
-      //     ),
-      //   ),
-      //   backgroundColor: Colors.transparent,
-      //   shadowColor: Colors.transparent,
-      // ),
       body: load
           ? spinkit
           : Container(
@@ -99,96 +122,34 @@ class _DriverHomePageState extends State<DriverHomePage> {
               child: Stack(
                 children: [
                   GoogleMap(
+                    onMapCreated: (GoogleMapController controller) {
+                      _controller.complete(controller);
+                    },
                     zoomControlsEnabled: false,
                     initialCameraPosition: CameraPosition(
                       target: LatLng(location.latitude ?? 0.0, location.longitude ?? 0.0),
                       zoom: 12.0,
                     ),
-                    onMapCreated: _onMapCreated,
                     markers: _markers,
                   ),
                   Align(
                     alignment: Alignment.bottomCenter,
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
-                      child: _requestCardUI(),
-                      // Material(
-                      //   // color: Colors.white,
-                      //   elevation: 15,
-                      //   borderRadius: BorderRadius.all(Radius.circular(10)),
-                      //   child: Container(
-                      //     decoration: BoxDecoration(
-                      //       border: Border.all(color: Colors.grey, width: 1),
-                      //       gradient:
-                      //           LinearGradient(colors: [Color(0x99000000), Color(0xFF000000)]),
-                      //       borderRadius: BorderRadius.all(Radius.circular(20)),
-                      //     ),
-                      //     height: 120,
-                      //     width: MediaQuery.of(context).size.width,
-                      //     child: Column(
-                      //       children: [
-                      //         Padding(
-                      //           padding: const EdgeInsets.all(12.0),
-                      //           child: Text(
-                      //             'Requests',
-                      //             style: GoogleFonts.workSans(color: Colors.white, fontSize: 18),
-                      //           ),
-                      //         ),
-                      //         SizedBox(
-                      //           height: 5,
-                      //         ),
-                      //         // Expanded(
-                      //         //   child: Container(
-                      //         //     decoration: BoxDecoration(
-                      //         //       gradient: LinearGradient(
-                      //         //         begin: Alignment.topCenter,
-                      //         //         end: Alignment.bottomCenter,
-                      //         //         stops: [
-                      //         //           0,0.5,1
-                      //         //         ],
-                      //         //         colors: [
-                      //         //           Colors.redAccent.shade100,
-                      //         //           Colors.redAccent,
-                      //         //           Colors.redAccent.shade100,
-                      //         //         ]
-                      //         //       )
-                      //         //     ),
-                      //         //   ),
-                      //         // )
-                      //         SizedBox(
-                      //           height: 5,
-                      //         ),
-                      //         Expanded(
-                      //           child: Padding(
-                      //             padding: const EdgeInsets.all(8.0),
-                      //             child: SliderButton(
-                      //               action: () {
-                      //                 Navigator.push(
-                      //                     context,
-                      //                     MaterialPageRoute(
-                      //                         builder: (BuildContext context) =>
-                      //                             Requests(location: location)));
-                      //               },
-                      //               icon: Center(
-                      //                 child: Icon(
-                      //                   Icons.local_taxi,
-                      //                   color: Colors.black,
-                      //                 ),
-                      //               ),
-                      //               label: Text(
-                      //                 "Slide to Get Requests",
-                      //                 style: GoogleFonts.workSans(
-                      //                     color: Colors.white,
-                      //                     fontSize: 14,
-                      //                     fontWeight: FontWeight.w400),
-                      //               ),
-                      //             ),
-                      //           ),
-                      //         )
-                      //       ],
-                      //     ),
-                      //   ),
-                      // ),
+                      padding: const EdgeInsets.fromLTRB(0, 0, 0, 50),
+                      child: CarouselSlider.builder(
+                        options: CarouselOptions(
+                          height: 350,
+                          enlargeCenterPage: true,
+                          // height: 100.0,
+                          initialPage: 0,
+                          viewportFraction: 0.8,
+                          autoPlay: false,
+                        ),
+                        itemCount: listOFRequests.length,
+                        itemBuilder: (context, itemIndex, realIndex) {
+                          return _requestCardUI(itemIndex);
+                        },
+                      ),
                     ),
                   )
                 ],
@@ -197,7 +158,9 @@ class _DriverHomePageState extends State<DriverHomePage> {
     );
   }
 
-  _requestCardUI() {
+  _requestCardUI(int itemIndex) {
+    Map<dynamic, dynamic> tempMap = listOFRequests[itemIndex];
+    _goToTheLake(tempMap);
     return Container(
       height: 350,
       decoration: BoxDecoration(
@@ -223,11 +186,14 @@ class _DriverHomePageState extends State<DriverHomePage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("Vaibhav Pallod", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                Text(tempMap['passengerName'],
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 Column(
                   children: [
-                    Text("105 ₹", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-                    Text("16 KM", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold))
+                    Text(tempMap['cost'].toString() + " ₹",
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                    Text(tempMap['distance'].toString() + " KM",
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold))
                   ],
                 )
               ],
@@ -255,11 +221,10 @@ class _DriverHomePageState extends State<DriverHomePage> {
                               fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey)),
                       TextField(
                         style: TextStyle(
-                            fontSize: 16.0,
-                            fontWeight: FontWeight.bold
-                        ),
+                            fontSize: 16.0, fontWeight: FontWeight.bold, color: Colors.black87),
+                        enabled: false,
                         decoration: InputDecoration(
-                          hintText: 'Nayantara Hills, Nashik, Maharashtra',
+                          hintText: tempMap['source'],
                           enabledBorder: UnderlineInputBorder(
                             borderSide: BorderSide(color: Colors.grey),
                           ),
@@ -275,13 +240,11 @@ class _DriverHomePageState extends State<DriverHomePage> {
                           style: TextStyle(
                               fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey)),
                       TextField(
+                        enabled: false,
                         style: TextStyle(
-                          fontSize: 16.0,
-                          fontWeight: FontWeight.bold
-                        ),
+                            fontSize: 16.0, fontWeight: FontWeight.bold, color: Colors.black87),
                         decoration: InputDecoration(
-
-                          hintText: 'New CBS bus stop, Thakkar Bazar,Nashik',
+                          hintText: tempMap['destination'],
                           enabledBorder: UnderlineInputBorder(
                             borderSide: BorderSide(color: Colors.grey),
                           ),
@@ -319,13 +282,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
                   color: Colors.black,
                   textColor: Colors.white,
                   press: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (BuildContext context) => Requests(
-                                location: location,
-                              )),
-                    );
+                    _acceptRequest(tempMap, itemIndex);
                   },
                 )
               ],
@@ -390,87 +347,101 @@ class _DriverHomePageState extends State<DriverHomePage> {
     mapMarker = await BitmapDescriptor.fromAssetImage(
         ImageConfiguration(devicePixelRatio: 2.5, size: Size.fromHeight(12)),
         'images/markerIcon.png');
-
-    setState(() {
+    int index = 0;
+    listOFRequests.forEach((element) {
       _markers.add(Marker(
           icon: mapMarker,
-          markerId: MarkerId('id-1'),
-          position: LatLng(18.602464, 73.781616),
+          markerId: MarkerId(mofKeys[index]),
+          position: LatLng(element['sourceLatitude'], element['sourceLongitude']),
           infoWindow: InfoWindow(
-            title: 'Rahatani',
+            title: 'Hiii Uber',
           )));
-      _markers.add(Marker(
-          icon: mapMarker,
-          markerId: MarkerId('id-2'),
-          position: LatLng(18.590014, 73.747523),
-          infoWindow: InfoWindow(
-            title: 'Rahatani',
-          )));
-
-      _markers.add(Marker(
-          icon: mapMarker,
-          markerId: MarkerId('id-3'),
-          position: LatLng(18.644837, 73.769367),
-          infoWindow: InfoWindow(
-            title: 'Nigdi',
-          )));
-
-      _markers.add(Marker(
-          icon: mapMarker,
-          markerId: MarkerId('id-4'),
-          position: LatLng(18.638168, 73.791211),
-          infoWindow: InfoWindow(
-            title: 'Rahatani',
-          )));
-
-      _markers.add(Marker(
-          icon: mapMarker,
-          markerId: MarkerId('id-5'),
-          position: LatLng(18.636867, 73.768552),
-          infoWindow: InfoWindow(
-            title: 'Railway Station',
-          )));
-      // 18.644837, 73.769367
     });
+    // setState(() {
+    //   _markers.add(Marker(
+    //       icon: mapMarker,
+    //       markerId: MarkerId('id-1'),
+    //       position: LatLng(18.602464, 73.781616),
+    //       infoWindow: InfoWindow(
+    //         title: 'Rahatani',
+    //       )));
+    //   _markers.add(Marker(
+    //       icon: mapMarker,
+    //       markerId: MarkerId('id-2'),
+    //       position: LatLng(18.590014, 73.747523),
+    //       infoWindow: InfoWindow(
+    //         title: 'Rahatani',
+    //       )));
+    //
+    //   _markers.add(Marker(
+    //       icon: mapMarker,
+    //       markerId: MarkerId('id-3'),
+    //       position: LatLng(18.644837, 73.769367),
+    //       infoWindow: InfoWindow(
+    //         title: 'Nigdi',
+    //       )));
+    //
+    //   _markers.add(Marker(
+    //       icon: mapMarker,
+    //       markerId: MarkerId('id-4'),
+    //       position: LatLng(18.638168, 73.791211),
+    //       infoWindow: InfoWindow(
+    //         title: 'Rahatani',
+    //       )));
+    //
+    //   _markers.add(Marker(
+    //       icon: mapMarker,
+    //       markerId: MarkerId('id-5'),
+    //       position: LatLng(18.636867, 73.768552),
+    //       infoWindow: InfoWindow(
+    //         title: 'Railway Station',
+    //       )));
+    //   // 18.644837, 73.769367
+    // });
   }
-}
 
-class RoundedButton extends StatelessWidget {
-  final String text;
-  final Function press;
-  final Color color, textColor;
+  Future<void> _acceptRequest(Map<dynamic, dynamic> request, int index) async {
+    Map<dynamic, dynamic> temprequest = request;
 
-  const RoundedButton({
-    Key key,
-    this.text,
-    this.press,
-    this.color = Colors.lightBlueAccent,
-    this.textColor = Colors.white,
-  }) : super(key: key);
+    DatabaseReference allUserreference =
+        FirebaseDatabase.instance.ref().child('allusers').child(request['uid']).child('rides');
 
-  @override
-  Widget build(BuildContext context) {
-    Size size = MediaQuery.of(context).size;
-    return Container(
-      decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.all(Radius.circular(10.0)),
-          border: Border.all(color: Colors.grey.shade800)),
-      height: 50,
-      margin: EdgeInsets.symmetric(vertical: 10),
-      width: size.width * 0.3,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: FlatButton(
-          // padding: EdgeInsets.symmetric(vertical: 20, horizontal:20),
-          color: color,
-          onPressed: press,
-          child: Text(
-            text,
-            style: TextStyle(color: textColor),
-          ),
-        ),
-      ),
-    );
+    String requestKey = mofKeys[index];
+    temprequest['status'] = 'Booked';
+    temprequest['driverLatitude'] = location.latitude;
+    temprequest['driverLongitude'] = location.longitude;
+    var email = request['passengerEmail'];
+    setState(() {
+      load = true;
+    });
+    var res = await http.get(Uri.parse(
+        "https://us-central1-uber-hacktag-group-booking.cloudfunctions.net/sendMail?dest=$email&uid=$requestKey"));
+    print(res.body);
+    databaseReference.child('requestPool').child(requestKey).set(temprequest).whenComplete(() => {
+          allUserreference
+              .child(temprequest['gloabalRequestID'])
+              .child(requestKey)
+              .set(temprequest)
+              .whenComplete(() => {
+                    setState(() {
+                      load = false;
+                      _showMessege("Accepted");
+                    }),
+                  }),
+        });
+  }
+
+  _showMessege(String msg) {
+    Fluttertoast.showToast(msg: msg);
+  }
+
+  Future<void> _goToTheLake(Map<dynamic, dynamic> tempMap) async {
+    CameraPosition _kLake = CameraPosition(
+        // bearing: 192.8334901395799,
+        target: LatLng(tempMap['sourceLatitude'], tempMap['sourceLongitude']),
+        // tilt: 59.440717697143555,
+        zoom: 12);
+    final GoogleMapController controller = await _controller.future;
+    controller.animateCamera(CameraUpdate.newCameraPosition(_kLake));
   }
 }

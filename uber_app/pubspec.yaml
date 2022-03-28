@@ -77,7 +77,7 @@ dependencies:
   flutter_polyline_points: ^1.0.0
   flutter_switch: ^0.3.2
   firebase_dynamic_links: ^4.1.1
-
+  carousel_slider: ^4.0.0
 
 
 
