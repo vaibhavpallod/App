@@ -5,12 +5,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:uber_hacktag_group_booking/konstants/loaders.dart';
+import 'package:uber_hacktag_group_booking/pages/MainHomePage.dart';
 import 'package:uuid/uuid.dart';
 import '../Enter/place_service.dart';
 import '../address_search.dart';
 import 'package:geocoder/geocoder.dart';
+import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 
 class BookingForm extends StatefulWidget {
   int cabsCount;
@@ -29,13 +33,16 @@ class _BookingFormState extends State<BookingForm> {
   List<TextEditingController> _emailController = [];
   List<TextEditingController> _phoneController = [];
   TextEditingController _lController=TextEditingController();
+  TextEditingController _timeC=TextEditingController();
   final homeScaffoldKey = GlobalKey<ScaffoldState>();
   List<bool>nameEmpty=[];
   List<bool>emailEmpty=[];
   List<bool>phoneEmpty=[];
   List<bool>locEmpty=[];
   List<Coordinates>crds=[];
+  DateTime scheduleTime;
   bool lEmpty=false;
+  bool timeEmpty=false;
   Coordinates cr;
   FirebaseFirestore firestore = FirebaseFirestore.instance;
   DatabaseReference requestPool =
@@ -111,12 +118,15 @@ class _BookingFormState extends State<BookingForm> {
   addAllRidesToRequestPool()async{
     User user=await FirebaseAuth.instance.currentUser;
     var uuid = const Uuid();
-    var randId = uuid.v1();
+    var randId1 = uuid.v1();
     DatabaseReference userRequest =
-    FirebaseDatabase.instance.ref().child('allusers').child(user.uid).child('rides').child(randId);
+    FirebaseDatabase.instance.ref().child('allusers').child(user.uid).child('rides').child(randId1);
     for(int i=0;i<widget.cabsCount;i++){
       Map<String, dynamic> ride;
       var randId = uuid.v1();
+      double dist= Geolocator.distanceBetween(cr.latitude, cr.longitude, crds[i].latitude, crds[i].longitude)/1000;
+      scheduleTime=scheduleTime.subtract(Duration(minutes: (dist*1.5).ceil()));
+      print(scheduleTime);
       if(widget.originSame) {
         ride = {
           'passengerName': _nameController[i].text.trim(),
@@ -131,7 +141,10 @@ class _BookingFormState extends State<BookingForm> {
           'destinationLatitude':crds[i].latitude,
           'destinationLongitude':crds[i].longitude,
           'status':'Finding',
-          'uid':user.uid
+          'uid':user.uid,
+          'distance':dist.toStringAsPrecision(3),
+          'scheduleTime':scheduleTime.millisecondsSinceEpoch,
+          'gloabalRequestID':randId1
         };
       }else{
         ride = {
@@ -147,7 +160,10 @@ class _BookingFormState extends State<BookingForm> {
           'destinationLatitude':cr.latitude,
           'destinationLongitude':cr.longitude,
           'status':'Finding',
-          'uid':user.uid
+          'uid':user.uid,
+          'distance':dist.toStringAsPrecision(2),
+          'scheduleTime':scheduleTime.millisecondsSinceEpoch,
+          'gloabalRequestID':randId1
         };
       }
       await requestPool.child(randId).set(ride).whenComplete(() => cnt++);
@@ -172,12 +188,9 @@ class _BookingFormState extends State<BookingForm> {
       };
     }
     await userRequest.update(map);
-    setState(() {
-      load=false;
-    });
     if(cnt==widget.cabsCount){
       Fluttertoast.showToast(msg: 'Cabs confirmed');
-      Navigator.pop(context);
+      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (BuildContext context)=>MainHomePage()), (route) => false);
     }else{
       Fluttertoast.showToast(msg: 'Please try again');
     }
@@ -262,6 +275,9 @@ class _BookingFormState extends State<BookingForm> {
                                   load = true;
                                 });
                                 await addAllRidesToRequestPool();
+                                setState(() {
+                                  load = true;
+                                });
                               },
                               child: Container(
                                 decoration: BoxDecoration(
@@ -374,6 +390,16 @@ class _BookingFormState extends State<BookingForm> {
                 }else{
                   setState(() {
                     lEmpty=false;
+                  });
+                }
+                if(_timeC.text==null||_timeC.text.trim().isEmpty){
+                  setState(() {
+                    timeEmpty=true;
+                  });
+                  a=true;
+                }else{
+                  setState(() {
+                    timeEmpty=false;
                   });
                 }
                 if(a==false){
@@ -554,6 +580,7 @@ class _BookingFormState extends State<BookingForm> {
                           keyboardType: TextInputType.number,
                         ),
                       ),
+
                     ],
                   ),
                 ),
@@ -562,7 +589,7 @@ class _BookingFormState extends State<BookingForm> {
             itemCount: widget.cabsCount,
           ),
           Padding(
-            padding: EdgeInsets.only(left: 8,right: 8,top: 8,bottom: 18),
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: TextField(
               readOnly: true,
               controller: _lController,
@@ -594,6 +621,32 @@ class _BookingFormState extends State<BookingForm> {
                     : 'Origin Location',
                 focusColor: Colors.black,
                 labelStyle: GoogleFonts.workSans(fontSize: 14),
+              ),
+              keyboardType: TextInputType.number,
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.only(left: 8,right: 8,top: 8,bottom: 18),
+            child: TextField(
+              controller: _timeC,
+              onTap: (){
+                DatePicker.showDateTimePicker(context,minTime: DateTime.now(),currentTime: DateTime.now(),onChanged: (date){
+                  setState(() {
+                    _timeC.text=DateFormat.yMMMMd('en_US').add_jm().format(date);
+                    scheduleTime=date;
+                  });
+                });
+              },
+              readOnly: true,
+              style: GoogleFonts.workSans(
+                  color: Colors.black, fontSize: 14),
+              decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                  errorText: timeEmpty?'Please provide time':null,
+                  labelText: "Scheduled Time",
+                  focusColor: Colors.black,
+                  labelStyle: GoogleFonts.workSans(fontSize: 14),
+                  errorStyle: GoogleFonts.workSans(fontSize: 10,color: Colors.red)
               ),
               keyboardType: TextInputType.number,
             ),

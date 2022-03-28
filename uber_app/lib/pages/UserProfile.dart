@@ -57,7 +57,6 @@ class _UserProfileState extends State<UserProfile> {
       l.add(d1.value);
     }
     setState(() {
-      l=l.reversed.toList();
       load=false;
     });
   }

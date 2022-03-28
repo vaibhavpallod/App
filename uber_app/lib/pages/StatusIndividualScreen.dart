@@ -32,8 +32,6 @@ class _StatusIndividualScreenState extends State<StatusIndividualScreen> {
 
 // List of coordinates to join
   List<LatLng> polylineCoordinates = [];
-  double _originLatitude = 18.395842, _originLongitude = 76.575635;
-  double _destLatitude = 18.382658, _destLongitude = 76.559714;
   LatLng DEST_LOCATION, SOURCE_LOCATION;
   Map<PolylineId, Polyline> polylines = {};
   String googleAPIKey = "";
@@ -51,14 +49,16 @@ class _StatusIndividualScreenState extends State<StatusIndividualScreen> {
     var res = await http.get(
         Uri.parse("https://uber-hacktag76.herokuapp.com/getLoc/"),
         headers: {"id": widget.id});
+    print(widget.id);
+    print("https://uber-hacktag76.herokuapp.com/getLoc/");
     print("Trackroute: " + res.body + '\n' + res.statusCode.toString());
-    Map<String, dynamic> responseMap = json.decode(res.body);
-
-    SOURCE_LOCATION = LatLng(widget.data['driverLatitude'], widget.data['driverLongitude']);
+    Map<String, dynamic> responseMap = json.decode(res.body)['location'];
+    print(responseMap);
+    SOURCE_LOCATION = LatLng(responseMap['driverLatitude'], responseMap['driverLongitude']);
     if(widget.data['status']=='Booked') {
-      DEST_LOCATION = LatLng(widget.data['sourceLatitude'], widget.data['sourceLongitude']);
+      DEST_LOCATION = LatLng(responseMap['sourceLatitude'], responseMap['sourceLongitude']);
     }else{
-      DEST_LOCATION = LatLng(widget.data['destinationLatitude'], widget.data['destinationLatitude']);
+      DEST_LOCATION = LatLng(responseMap['destinationLatitude'], responseMap['destinationLatitude']);
     }
 
     // SOURCE_LOCATION = LatLng(_originLatitude, _originLongitude);
@@ -73,6 +73,8 @@ class _StatusIndividualScreenState extends State<StatusIndividualScreen> {
       _southwestCoordinates = DEST_LOCATION;
       _northeastCoordinates = SOURCE_LOCATION;
     }
+    print(_southwestCoordinates);
+    print(_northeastCoordinates);
     setSourceAndDestinationIcons();
     _createPolylines(SOURCE_LOCATION.latitude, SOURCE_LOCATION.longitude,
         DEST_LOCATION.latitude, DEST_LOCATION.longitude);
@@ -165,32 +167,31 @@ class _StatusIndividualScreenState extends State<StatusIndividualScreen> {
       body: load
           ? spinkit
           : GoogleMap(
-              minMaxZoomPreference: MinMaxZoomPreference(14, 17),
               markers: _markers,
               polylines: Set<Polyline>.of(polylines.values),
               initialCameraPosition: CameraPosition(
                   target: LatLng(SOURCE_LOCATION.latitude ?? 0.0,
                       SOURCE_LOCATION.longitude ?? 0.0),
-                  zoom: 20.0,
+                  zoom: 14.0,
                   bearing: 30),
               onMapCreated: (GoogleMapController controller) {
                 controller.setMapStyle(Utils.mapStyles);
                 _controller = controller;
-                _controller.animateCamera(
-                  CameraUpdate.newLatLngBounds(
-                    LatLngBounds(
-                      northeast: LatLng(
-                        _northeastCoordinates.latitude,
-                        _northeastCoordinates.longitude,
-                      ),
-                      southwest: LatLng(
-                        _southwestCoordinates.latitude,
-                        _southwestCoordinates.longitude,
-                      ),
-                    ),
-                    100.0, // padding
-                  ),
-                );
+                // _controller.animateCamera(
+                //   CameraUpdate.newLatLngBounds(
+                //     LatLngBounds(
+                //       northeast: LatLng(
+                //         _northeastCoordinates.latitude,
+                //         _northeastCoordinates.longitude,
+                //       ),
+                //       southwest: LatLng(
+                //         _southwestCoordinates.latitude,
+                //         _southwestCoordinates.longitude,
+                //       ),
+                //     ),
+                //     100.0, // padding
+                //   ),
+                // );
               },
               zoomGesturesEnabled: true,
               zoomControlsEnabled: false,

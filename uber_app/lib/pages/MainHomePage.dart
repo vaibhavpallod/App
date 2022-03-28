@@ -274,7 +274,7 @@ class _MainHomePageState extends State<MainHomePage> {
                                   ),
                                 ),
                                 label: Text(
-                                  "Slide to Book",
+                                  "Slide to Schedule",
                                   style: GoogleFonts.workSans(color: Colors.white,
                                       fontSize: 14,
                                       fontWeight: FontWeight.w400),
