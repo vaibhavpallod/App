@@ -55,10 +55,8 @@ class _TrackRouteDriverState extends State<TrackRouteDriver> {
     print("Trackroute: " +  res.body+'\n'+res.statusCode.toString());
     Map<String, dynamic> responseMap  = json.decode(res.body);
 
-    // Map<dynamic,dynamic> responseMap = res.body as Map<dynamic, dynamic>;
     // for now it's on driver side so driver location is source
     SOURCE_LOCATION = LatLng(responseMap["location"]["driverLatitude"], responseMap["location"]["driverLongitude"]);
-    // and dest will be the origin from where trip is going to start
     // DEST_LOCATION = LatLng(responseMap["location"]["sourceLatitude"], responseMap["location"]["sourceLongitude"]);
     DEST_LOCATION = LatLng(_destLatitude,_destLongitude);
 
