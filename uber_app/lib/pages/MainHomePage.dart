@@ -28,7 +28,7 @@ class _MainHomePageState extends State<MainHomePage> {
   int noc = 2;
   String name;
   bool load = true;
-  LocationData location;
+ LocationData location;
   bool originSame = true;
   bool whichSame = true;
   var storage = FlutterSecureStorage();
@@ -39,19 +39,28 @@ class _MainHomePageState extends State<MainHomePage> {
     print('page' + "Userpage");
 
     super.initState();
+   getLocation();
   }
 
 
-  Future<LocationData> getLocation() async {
-    name=await storage.read(key: 'name');
+  addMarker(LocationData location,var pinLocationIcon){
+    _markers.add(Marker(markerId: MarkerId('Home'),
+        position: LatLng(location.latitude ?? 0.0, location.longitude ?? 0.0),
+        icon: pinLocationIcon
+    ));
+  }
+
+
+  void getLocation() async {
     var pinLocationIcon = await BitmapDescriptor.fromAssetImage(
         ImageConfiguration(devicePixelRatio: 2.5,size: Size.fromHeight(12)),
         'images/pin.png');
+    name=await storage.read(key: 'name');
     location = await currentLocation.getLocation();
-    _markers.add(Marker(markerId: MarkerId('Home'),
-      position: LatLng(location.latitude ?? 0.0, location.longitude ?? 0.0),
-      icon: pinLocationIcon
-    ));
+    addMarker(location, pinLocationIcon);
+    setState(() {
+      load=false;
+    });
     currentLocation.onLocationChanged.listen((LocationData loc) {
       _markers = {};
         _markers.add(Marker(markerId: MarkerId('Home'),
@@ -59,7 +68,6 @@ class _MainHomePageState extends State<MainHomePage> {
           icon: pinLocationIcon
         ));
     });
-    return location;
   }
 
 
@@ -74,7 +82,7 @@ class _MainHomePageState extends State<MainHomePage> {
             child: FloatingActionButton(
               backgroundColor: Colors.white,
               mini: true,
-              onPressed: () async =>
+              onPressed: () =>
               {
                 // await storage.deleteAll(),
                 // Navigator.pushAndRemoveUntil(context, MaterialPageRoute(
@@ -88,13 +96,7 @@ class _MainHomePageState extends State<MainHomePage> {
         backgroundColor: Colors.transparent,
         shadowColor: Colors.transparent,
       ),
-      body: FutureBuilder(
-        future: getLocation(),
-        builder: (BuildContext context, AsyncSnapshot<LocationData> snapshot){
-          switch (snapshot.connectionState){
-            case ConnectionState.waiting:return spinkit;
-            default:
-              return SizedBox(
+      body: load?spinkit:SizedBox(
           height: MediaQuery
               .of(context)
               .size
@@ -288,9 +290,6 @@ class _MainHomePageState extends State<MainHomePage> {
               )
             ],
           ),
-        );}
-  },
-      ),
-    );
+        ));
   }
 }
