@@ -42,7 +42,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
     print('page' + "Drivepage");
     super.initState();
     getRequests();
-    serCustomMarker();
+    // serCustomMarker();
   }
 
   void getRequests() {
@@ -82,18 +82,12 @@ class _DriverHomePageState extends State<DriverHomePage> {
             });
   }
 
-  void _onMapCreated(GoogleMapController controller) {
-    // 18.602464, 73.781616
-    // 18.590014, 73.747523
-
-    // 18.636867, 73.768552
-  }
-
   void getDriverLocation() async {
     location = await currentLocation.getLocation();
-    setState(() {
-      load = false;
-    });
+    serCustomMarker();
+    // setState(() {
+    //   load = false;
+    // });
     currentLocation.onLocationChanged.listen((LocationData loc) {
       // _currentMarker = {};
       location = loc;
@@ -102,11 +96,12 @@ class _DriverHomePageState extends State<DriverHomePage> {
       //     position: LatLng(loc.latitude ?? 0.0, loc.longitude ?? 0.0)));
       print(loc.latitude.toString() + "," + loc.longitude.toString());
       // print();
-      if (mounted)
-        setState(() {
-          load = false;
-        });
+      // if (mounted)
+      //   setState(() {
+      //     load = false;
+      //   });
     });
+
   }
 
   @override
@@ -147,6 +142,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
                         ),
                         itemCount: listOFRequests.length,
                         itemBuilder: (context, itemIndex, realIndex) {
+                          print('itemIndex' + itemIndex.toString());
                           return _requestCardUI(itemIndex);
                         },
                       ),
@@ -160,11 +156,10 @@ class _DriverHomePageState extends State<DriverHomePage> {
 
   _requestCardUI(int itemIndex) {
     Map<dynamic, dynamic> tempMap = listOFRequests[itemIndex];
-    _goToTheLake(tempMap);
+    _goToTheLake(listOFRequests[(itemIndex-1)%listOFRequests.length] );
     return Container(
       height: 350,
       decoration: BoxDecoration(
-        // color: Colors.grey.shade200,
         color: Colors.white,
         borderRadius: BorderRadius.all(Radius.circular(15.0)),
       ),
@@ -356,6 +351,9 @@ class _DriverHomePageState extends State<DriverHomePage> {
           infoWindow: InfoWindow(
             title: 'Hiii Uber',
           )));
+    });
+    setState(() {
+      load=false;
     });
     // setState(() {
     //   _markers.add(Marker(
