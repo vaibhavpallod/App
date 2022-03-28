@@ -75,6 +75,7 @@ dependencies:
   geocoder: ^0.2.1
   http: ^0.13.4
   flutter_polyline_points: ^1.0.0
+  firebase_dynamic_links: ^4.1.1
 
 
 
