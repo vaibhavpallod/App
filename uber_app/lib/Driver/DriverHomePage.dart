@@ -46,14 +46,17 @@ class _DriverHomePageState extends State<DriverHomePage> {
 
   void getLocation() async {
     location = await currentLocation.getLocation();
+    setState(() {
+      load = false;
+    });
     currentLocation.onLocationChanged.listen((LocationData loc) {
       // _currentMarker = {};
 
-      _markers.add(Marker(
-          markerId: MarkerId('Home'),
-          position: LatLng(loc.latitude ?? 0.0, loc.longitude ?? 0.0)));
-      print(loc.latitude);
-      print(loc.longitude);
+      // _markers.add(Marker(
+      //     markerId: MarkerId('Home'),
+      //     position: LatLng(loc.latitude ?? 0.0, loc.longitude ?? 0.0)));
+      print(loc.latitude.toString()+","+loc.longitude.toString());
+      // print();
       if(mounted)
       setState(() {
         load = false;
