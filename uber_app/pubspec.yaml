@@ -75,7 +75,7 @@ dependencies:
   geocoder: ^0.2.1
   http: ^0.13.4
   flutter_polyline_points: ^1.0.0
-
+  flutter_switch: ^0.3.2
 
 
 
