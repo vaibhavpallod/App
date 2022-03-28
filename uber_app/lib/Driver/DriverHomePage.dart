@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_switch/flutter_switch.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:location/location.dart';
@@ -32,16 +33,17 @@ class _DriverHomePageState extends State<DriverHomePage> {
   bool _switchValue = true;
   DatabaseReference databaseReference = FirebaseDatabase.instance.ref();
   List<Map<dynamic, dynamic>> listOFRequests;
-  List<String> mofKeys;
+  List<String> listOFKeys;
 
   @override
   void initState() {
     // TODO: implement initState
     listOFRequests = List();
-    mofKeys = List();
+    listOFKeys = List();
     print('page' + "Drivepage");
     super.initState();
-    getRequests();
+    // getRequests();
+    getDriverLocation();
     // serCustomMarker();
   }
 
@@ -56,35 +58,51 @@ class _DriverHomePageState extends State<DriverHomePage> {
               print("Requests" + value.value.toString()),
               tempMap.addAll(value.value),
               tempMap.keys.forEach((element) {
-                mofKeys.add(element);
+                listOFKeys.add(element);
               }),
 
               tempMap.values.forEach((element) {
                 print(element.toString());
 
-                // double destinationLongitude = element['destinationLongitude'];
-                // double destinationLatitude = element['destinationLatitude'];
-                // double orginLat = element['sourceLatitude'];
-                // double orginLng = element['sourceLongitude'];
-                // double distanceInMeters = Geolocator.distanceBetween(
-                //     orginLat, orginLng, destinationLatitude, destinationLongitude);
+                double destinationLatitude = element['sourceLatitude'];
+                double destinationLongitude = element['sourceLongitude'];
+                // double driverLat = element['driverLatitude'];
+                // double driverLng = element['driverLongitude'];
+                double distanceInMeters = Geolocator.distanceBetween(
+                    location.latitude, location.longitude, destinationLatitude, destinationLongitude);
                 // element['distance'] = distanceInMeters;
-
-                listOFRequests.add(element as Map); // = value.value,
+                // var dist = (distanceInMeters / 1000);
+                var currentTime = DateTime.now().millisecondsSinceEpoch;
+                print("print: " +
+                    (currentTime)
+                        .toString()); // Validation for requests based on TIme, distance & Status
+                print("print: " +
+                    (distanceInMeters)
+                        .toString()); // Validation for requests based on TIme, distance & Status
+                if(element['status']=="Finding" && currentTime >= element['scheduleTime'] && distanceInMeters <=10000)
+                listOFRequests.add(element as Map);
               }),
+              print("print"+listOFRequests.toString()),
+              tempMap.forEach((key, value) {
+                if(!listOFRequests.contains(value)){
+                  print("print"+key);
+                  listOFKeys.remove(key);
+                }
+              })
+
               // value.fo
             })
         .whenComplete(() => {
               listOFRequests.forEach((element) {
                 print("Requests Map: " + element.toString());
               }),
-              getDriverLocation(),
+              serCustomMarker(),
             });
   }
 
   void getDriverLocation() async {
     location = await currentLocation.getLocation();
-    serCustomMarker();
+    getRequests();
     // setState(() {
     //   load = false;
     // });
@@ -101,7 +119,6 @@ class _DriverHomePageState extends State<DriverHomePage> {
       //     load = false;
       //   });
     });
-
   }
 
   @override
@@ -156,7 +173,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
 
   _requestCardUI(int itemIndex) {
     Map<dynamic, dynamic> tempMap = listOFRequests[itemIndex];
-    _goToTheLake(listOFRequests[(itemIndex-1)%listOFRequests.length] );
+    _goToTheLake(listOFRequests[(itemIndex - 1) % listOFRequests.length]);
     return Container(
       height: 350,
       decoration: BoxDecoration(
@@ -346,14 +363,14 @@ class _DriverHomePageState extends State<DriverHomePage> {
     listOFRequests.forEach((element) {
       _markers.add(Marker(
           icon: mapMarker,
-          markerId: MarkerId(mofKeys[index]),
+          markerId: MarkerId(listOFKeys[index]),
           position: LatLng(element['sourceLatitude'], element['sourceLongitude']),
           infoWindow: InfoWindow(
             title: 'Hiii Uber',
           )));
     });
     setState(() {
-      load=false;
+      load = false;
     });
     // setState(() {
     //   _markers.add(Marker(
@@ -404,7 +421,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
     DatabaseReference allUserreference =
         FirebaseDatabase.instance.ref().child('allusers').child(request['uid']).child('rides');
 
-    String requestKey = mofKeys[index];
+    String requestKey = listOFKeys[index];
     temprequest['status'] = 'Booked';
     temprequest['driverLatitude'] = location.latitude;
     temprequest['driverLongitude'] = location.longitude;
