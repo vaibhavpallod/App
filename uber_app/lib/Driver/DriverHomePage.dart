@@ -1,19 +1,25 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_switch/flutter_switch.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:location/location.dart';
+import 'package:slider_button/slider_button.dart';
 import 'package:uber_hacktag_group_booking/Driver/Requests.dart';
 import 'package:uber_hacktag_group_booking/konstants/loaders.dart';
-
+import 'dart:convert';
+import '../Utils.dart';
 import '../konstants/Constansts.dart';
 
 class DriverHomePage extends StatefulWidget {
@@ -26,7 +32,14 @@ class _DriverHomePageState extends State<DriverHomePage> {
   Location currentLocation = Location();
   Set<Marker> _markers = {}, _currentMarker;
   bool load = true;
+  BitmapDescriptor sourceIcon;
+  BitmapDescriptor destinationIcon;
+  PolylinePoints polylinePoints;
+  List<LatLng> polylineCoordinates = [];
+  Map<PolylineId, Polyline> polylines = {};
   LocationData location;
+  String status='Finding';
+  String finalCode;
 
   var storage = FlutterSecureStorage();
   BitmapDescriptor mapMarker;
@@ -34,6 +47,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
   DatabaseReference databaseReference = FirebaseDatabase.instance.ref();
   List<Map<dynamic, dynamic>> listOFRequests;
   List<String> listOFKeys;
+  LatLng DEST_LOCATION, SOURCE_LOCATION;
 
   @override
   void initState() {
@@ -47,7 +61,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
     // serCustomMarker();
   }
 
-  void getRequests() {
+   getRequests() {
     final database = FirebaseDatabase.instance;
     Map<dynamic, dynamic> tempMap = Map();
     double dist;
@@ -79,8 +93,11 @@ class _DriverHomePageState extends State<DriverHomePage> {
                 print("print: " +
                     (distanceInMeters)
                         .toString()); // Validation for requests based on TIme, distance & Status
-                if(element['status']=="Finding" && currentTime >= element['scheduleTime'] && distanceInMeters <=10000)
-                listOFRequests.add(element as Map);
+                if(element['status']=="Finding" && currentTime >= element['scheduleTime'] && distanceInMeters <=10000) {
+                  setState(() {
+                    listOFRequests.add(element as Map);
+                  });
+                }
               }),
               print("print"+listOFRequests.toString()),
               tempMap.forEach((key, value) {
@@ -100,9 +117,167 @@ class _DriverHomePageState extends State<DriverHomePage> {
             });
   }
 
-  void getDriverLocation() async {
+  Future<void> getLatLongfromRequestPool(String status) async {
+    String id=await storage.read(key: 'id');
+
+    var res = await http.get(
+        Uri.parse("https://uber-hacktag76.herokuapp.com/getLoc/"),
+        headers: {"id": id});
+    Map<String, dynamic> responseMap = json.decode(res.body)['location'];
+    print(responseMap);
+    SOURCE_LOCATION = LatLng(responseMap['driverLatitude'], responseMap['driverLongitude']);
+    if(status=='booked') {
+      DEST_LOCATION = LatLng(responseMap['sourceLatitude'], responseMap['sourceLongitude']);
+    }else{
+      DEST_LOCATION = LatLng(responseMap['destinationLatitude'], responseMap['destinationLatitude']);
+    }
+
+    // SOURCE_LOCATION = LatLng(_originLatitude, _originLongitude);
+    // DEST_LOCATION = LatLng(_destLatitude, _destLongitude);
+
+// Calculating to check that
+// southwest coordinate <= northeast coordinate
+//     if (SOURCE_LOCATION.latitude <= DEST_LOCATION.latitude) {
+//       _southwestCoordinates = SOURCE_LOCATION;
+//       _northeastCoordinates = DEST_LOCATION;
+//     } else {
+//       _southwestCoordinates = DEST_LOCATION;
+//       _northeastCoordinates = SOURCE_LOCATION;
+//     }
+//     print(_southwestCoordinates);
+//     print(_northeastCoordinates);
+    setSourceAndDestinationIcons();
+    _createPolylines(SOURCE_LOCATION.latitude, SOURCE_LOCATION.longitude,
+        DEST_LOCATION.latitude, DEST_LOCATION.longitude);
+  }
+
+  _createPolylines(
+      double startLatitude,
+      double startLongitude,
+      double destinationLatitude,
+      double destinationLongitude,
+      ) async {
+    polylinePoints = PolylinePoints();
+
+    // Generating the list of coordinates to be used for
+    // drawing the polylines
+    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+      API_KEY, // Google Maps API Key
+      PointLatLng(startLatitude, startLongitude),
+      PointLatLng(destinationLatitude, destinationLongitude),
+      travelMode: TravelMode.driving,
+    );
+    print("Trackroute:" +
+        result.status +
+        " " +
+        result.points.toString() +
+        " " +
+        result.errorMessage.toString());
+    if (result.points.isNotEmpty) {
+      result.points.forEach((PointLatLng point) {
+        polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+      });
+    }
+
+    // Defining an ID
+    PolylineId id = PolylineId('poly');
+
+    // Initializing Polyline
+    Polyline polyline = Polyline(
+      polylineId: id,
+      color: Colors.black,
+      points: polylineCoordinates,
+      width: 5,
+      jointType: JointType.mitered,
+      endCap: Cap.squareCap,
+      startCap: Cap.buttCap,
+    );
+
+    // Adding the polyline to the map
+    setState(() {
+      polylines[id] = polyline;
+      load = false;
+    });
+    // print("Trackroute: ");
+    // print(polylines);
+  }
+
+  // changeStatus(){
+  //   Map<dynamic, dynamic> temprequest = request;
+  //
+  //   DatabaseReference allUserreference =
+  //   FirebaseDatabase.instance.ref().child('allusers').child(request['uid']).child('rides');
+  //
+  //   String requestKey = listOFKeys[index];
+  //   temprequest['status'] = 'Booked';
+  //   temprequest['driverLatitude'] = location.latitude;
+  //   temprequest['driverLongitude'] = location.longitude;
+  //   temprequest['otp'] = generateOTP();
+  //   var email = request['passengerEmail'];
+  //   setState(() {
+  //     load = true;
+  //   });
+  //   var res = await http.get(Uri.parse(
+  //       "https://us-central1-uber-hacktag-group-booking.cloudfunctions.net/sendMail?dest=$email&uid=$requestKey"));
+  //   print(res.body);
+  //   databaseReference.child('requestPool').child(requestKey).set(temprequest).whenComplete(() => {
+  //     allUserreference
+  //         .child(temprequest['gloabalRequestID'])
+  //         .child(requestKey)
+  //         .set(temprequest)
+  //         .whenComplete(() => {
+  //       storage.write(key: 'status', value: 'booked').whenComplete(()async{
+  //         await storage.write(key: 'id', value: requestKey);
+  //         await getDriverLocation();
+  //         _showMessege('Accepted');
+  //         setState(() {
+  //           load=false;
+  //         });
+  //       })
+  //     }),
+  //   });
+  // }
+
+
+   setSourceAndDestinationIcons() async {
+    sourceIcon = await BitmapDescriptor.fromAssetImage(
+        ImageConfiguration(devicePixelRatio: 2.5), "images/sourcePin.png");
+    destinationIcon = await BitmapDescriptor.fromAssetImage(
+        ImageConfiguration(devicePixelRatio: 2.5), "images/destPin.png");
+    setMapPins();
+  }
+  void setMapPins() {
+    _markers={};
+    setState(() {
+      _markers.add(Marker(
+          markerId: MarkerId("sourcePin"),
+          position: SOURCE_LOCATION,
+          icon: sourceIcon));
+      // destination pin
+      _markers.add(Marker(
+          markerId: MarkerId("destPin"),
+          position: DEST_LOCATION,
+          icon: destinationIcon));
+    });
+  }
+
+  getDriverLocation() async {
     location = await currentLocation.getLocation();
-    getRequests();
+    bool statusPresent=await storage.containsKey(key: 'status');
+    print(statusPresent);
+    if(!statusPresent)
+      await getRequests();
+    else{
+      status=await storage.read(key: 'status');
+      print(status);
+      if(status=='booked') {
+        await getLatLongfromRequestPool(status);
+        print('hello');
+        setState(() {
+          load = false;
+        });
+      }
+    }
     // setState(() {
     //   load = false;
     // });
@@ -121,6 +296,16 @@ class _DriverHomePageState extends State<DriverHomePage> {
     });
   }
 
+
+  Future<bool> checkOTP()async{
+    String id=await storage.read(key: 'id');
+    DataSnapshot ds=await databaseReference.child('requestPool').child(id).get();
+    Map map=ds.value;
+    print(map['otp']);
+    return map['otp']==int.parse(finalCode);
+
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -135,16 +320,22 @@ class _DriverHomePageState extends State<DriverHomePage> {
                 children: [
                   GoogleMap(
                     onMapCreated: (GoogleMapController controller) {
+                      controller.setMapStyle(Utils.mapStyles);
                       _controller.complete(controller);
                     },
+                    polylines: status=='booked'? Set<Polyline>.of(polylines.values):{},
                     zoomControlsEnabled: false,
-                    initialCameraPosition: CameraPosition(
+                    initialCameraPosition: status=='Finding'?CameraPosition(
                       target: LatLng(location.latitude ?? 0.0, location.longitude ?? 0.0),
                       zoom: 12.0,
-                    ),
+                    ):CameraPosition(
+                        target: LatLng(SOURCE_LOCATION.latitude ?? 0.0,
+                            SOURCE_LOCATION.longitude ?? 0.0),
+                        zoom: 14.0,
+                        bearing: 30),
                     markers: _markers,
                   ),
-                  Align(
+                  status=='Finding'?Align(
                     alignment: Alignment.bottomCenter,
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(0, 0, 0, 50),
@@ -156,12 +347,128 @@ class _DriverHomePageState extends State<DriverHomePage> {
                           initialPage: 0,
                           viewportFraction: 0.8,
                           autoPlay: false,
+                          enableInfiniteScroll: false
                         ),
                         itemCount: listOFRequests.length,
                         itemBuilder: (context, itemIndex, realIndex) {
                           print('itemIndex' + itemIndex.toString());
                           return _requestCardUI(itemIndex);
                         },
+                      ),
+                    ),
+                  ):Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 8),
+                      child: Material(
+                        elevation: 15,
+                        borderRadius: BorderRadius.all(Radius.circular(20)),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey, width: 1),
+                            gradient: LinearGradient(
+                                colors: [
+                                  Color(0x99000000),
+                                  Color(0xFF000000)
+                                ]
+                            ),
+                            borderRadius: BorderRadius.all(Radius.circular(20)),
+                          ),
+                          height: 180,
+                          width: MediaQuery
+                              .of(context)
+                              .size
+                              .width,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                child: Center(
+                                  child: Text('Enter OTP',
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.workSans(
+                                        color: Colors.white, fontSize: 18),),
+                                ),
+                              ),
+                              SizedBox(height: 5,),
+                              Container(
+                                child: OtpTextField(
+                                  textStyle: GoogleFonts.workSans(fontSize: 15,color: Colors.white),
+                                  numberOfFields: 4,
+                                  borderColor: Colors.grey,
+                                  focusedBorderColor: Colors.grey,
+                                  cursorColor: Colors.white,
+                                  showFieldAsBox: true,
+                                  fieldWidth: MediaQuery.of(context).size.width / 10,
+                                  borderWidth: 2.0,
+                                  //runs when a code is typed in
+                                  onSubmit: (String code) {
+                                    //handle validation or checks here if necessary
+                                    print(code);
+                                    setState(() {
+                                      finalCode = code;
+                                    });
+                                  },
+                                ),
+                              ),
+                              // Expanded(
+                              //   child: Container(
+                              //     decoration: BoxDecoration(
+                              //       gradient: LinearGradient(
+                              //         begin: Alignment.topCenter,
+                              //         end: Alignment.bottomCenter,
+                              //         stops: [
+                              //           0,0.5,1
+                              //         ],
+                              //         colors: [
+                              //           Colors.redAccent.shade100,
+                              //           Colors.redAccent,
+                              //           Colors.redAccent.shade100,
+                              //         ]
+                              //       )
+                              //     ),
+                              //   ),
+                              // )
+                              SizedBox(height: 5,),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: SliderButton(
+                                    action: ()async{
+                                      if(finalCode==null||finalCode.length<4){
+                                        Fluttertoast.showToast(msg: 'Enter correct OTP');
+                                      }
+                                      else {
+                                        setState(() {
+                                          load = true;
+                                        });
+                                        bool otpCorrect = await checkOTP();
+                                        if(otpCorrect){
+
+                                        }
+                                      }
+                                    },
+                                    icon: Center(
+                                      child: Icon(
+                                        Icons.local_taxi,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                    label: Text(
+                                      "Slide to Start",
+                                      style: GoogleFonts.workSans(color: Colors.white,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w400),
+                                    ),
+                                  ),
+                                ),
+                              )
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   )
@@ -182,30 +489,19 @@ class _DriverHomePageState extends State<DriverHomePage> {
       ),
       child: Column(
         children: [
-          Row(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(15, 10, 0, 0),
-                child: Text(
-                  "HackTag 2.0",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              )
-            ],
-          ),
           Padding(
             padding: const EdgeInsets.all(15.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(tempMap['passengerName'],
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    style: GoogleFonts.workSans(fontSize: 20, fontWeight: FontWeight.bold,)),
                 Column(
                   children: [
                     Text(tempMap['cost'].toString() + " ₹",
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                        style: GoogleFonts.workSans(fontSize: 15, fontWeight: FontWeight.bold)),
                     Text(tempMap['distance'].toString() + " KM",
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold))
+                        style: GoogleFonts.workSans(fontSize: 15, fontWeight: FontWeight.bold))
                   ],
                 )
               ],
@@ -229,10 +525,10 @@ class _DriverHomePageState extends State<DriverHomePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text("Pickup Point",
-                          style: TextStyle(
+                          style: GoogleFonts.workSans(
                               fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey)),
                       TextField(
-                        style: TextStyle(
+                        style: GoogleFonts.workSans(
                             fontSize: 16.0, fontWeight: FontWeight.bold, color: Colors.black87),
                         enabled: false,
                         decoration: InputDecoration(
@@ -249,11 +545,11 @@ class _DriverHomePageState extends State<DriverHomePage> {
                         height: 20.0,
                       ),
                       Text("Dropping Point",
-                          style: TextStyle(
+                          style: GoogleFonts.workSans(
                               fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey)),
                       TextField(
                         enabled: false,
-                        style: TextStyle(
+                        style: GoogleFonts.workSans(
                             fontSize: 16.0, fontWeight: FontWeight.bold, color: Colors.black87),
                         decoration: InputDecoration(
                           hintText: tempMap['destination'],
@@ -325,7 +621,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
                 centerTitle: true,
                 title: Text(
                   "Driver",
-                  style: TextStyle(color: Colors.black),
+                  style: GoogleFonts.workSans(color: Colors.black),
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: new BorderRadius.all(Radius.circular(10.0)),
@@ -415,6 +711,13 @@ class _DriverHomePageState extends State<DriverHomePage> {
     // });
   }
 
+
+  int generateOTP(){
+    var rng = new Random();
+    var rand = rng.nextInt(9000) + 1000;
+    return (rand.toInt());
+  }
+
   Future<void> _acceptRequest(Map<dynamic, dynamic> request, int index) async {
     Map<dynamic, dynamic> temprequest = request;
 
@@ -425,6 +728,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
     temprequest['status'] = 'Booked';
     temprequest['driverLatitude'] = location.latitude;
     temprequest['driverLongitude'] = location.longitude;
+    temprequest['otp'] = generateOTP();
     var email = request['passengerEmail'];
     setState(() {
       load = true;
@@ -438,10 +742,14 @@ class _DriverHomePageState extends State<DriverHomePage> {
               .child(requestKey)
               .set(temprequest)
               .whenComplete(() => {
-                    setState(() {
-                      load = false;
-                      _showMessege("Accepted");
-                    }),
+                storage.write(key: 'status', value: 'booked').whenComplete(()async{
+                  await storage.write(key: 'id', value: requestKey);
+                   await getDriverLocation();
+                   _showMessege('Accepted');
+                   setState(() {
+                     load=false;
+                   });
+                })
                   }),
         });
   }

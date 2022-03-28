@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 // class FitnessAppTheme {
 const kDarkPrimaryColor = Color(0xFF212121);
@@ -74,7 +75,7 @@ class RoundedButton extends StatelessWidget {
           onPressed: press,
           child: Text(
             text,
-            style: TextStyle(color: textColor),
+            style: GoogleFonts.workSans(color: textColor),
           ),
         ),
       ),

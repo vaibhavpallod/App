@@ -66,15 +66,15 @@ class _StatusIndividualScreenState extends State<StatusIndividualScreen> {
 
 // Calculating to check that
 // southwest coordinate <= northeast coordinate
-    if (SOURCE_LOCATION.latitude <= DEST_LOCATION.latitude) {
-      _southwestCoordinates = SOURCE_LOCATION;
-      _northeastCoordinates = DEST_LOCATION;
-    } else {
-      _southwestCoordinates = DEST_LOCATION;
-      _northeastCoordinates = SOURCE_LOCATION;
-    }
-    print(_southwestCoordinates);
-    print(_northeastCoordinates);
+//     if (SOURCE_LOCATION.latitude <= DEST_LOCATION.latitude) {
+//       _southwestCoordinates = SOURCE_LOCATION;
+//       _northeastCoordinates = DEST_LOCATION;
+//     } else {
+//       _southwestCoordinates = DEST_LOCATION;
+//       _northeastCoordinates = SOURCE_LOCATION;
+//     }
+//     print(_southwestCoordinates);
+//     print(_northeastCoordinates);
     setSourceAndDestinationIcons();
     _createPolylines(SOURCE_LOCATION.latitude, SOURCE_LOCATION.longitude,
         DEST_LOCATION.latitude, DEST_LOCATION.longitude);
