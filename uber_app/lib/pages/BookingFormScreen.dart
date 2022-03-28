@@ -22,7 +22,7 @@ class BookingForm extends StatefulWidget {
 }
 
 class _BookingFormState extends State<BookingForm> {
-  List<String> selectedCab = [];
+  // List<String> selectedCab = [];
   int cnt=0;
   List<TextEditingController> _locationController = [];
   List<TextEditingController> _nameController = [];
@@ -56,7 +56,7 @@ class _BookingFormState extends State<BookingForm> {
       _nameController.add(TextEditingController());
       _emailController.add(TextEditingController());
       _phoneController.add(TextEditingController());
-      selectedCab.add("Auto");
+      // selectedCab.add("Auto");
     }
     super.initState();
   }
@@ -87,6 +87,9 @@ class _BookingFormState extends State<BookingForm> {
 
 
   determineCost()async{
+    setState(() {
+      load=true;
+    });
     cost1=[];
     cost=0;
     var src = await Geocoder.local.findAddressesFromQuery(_lController.text.trim());
@@ -100,6 +103,9 @@ class _BookingFormState extends State<BookingForm> {
       crds.add(coordinates);
       cost=cost+res;
     }
+    setState(() {
+      load=false;
+    });
   }
 
   addAllRidesToRequestPool()async{
@@ -118,13 +124,14 @@ class _BookingFormState extends State<BookingForm> {
           'passengerPhone': _phoneController[i].text.trim(),
           'source': _lController.text.trim(),
           'destination':_locationController[i].text.trim(),
-          'type':selectedCab[i],
+          // 'type':selectedCab[i],
           'cost':cost1[i],
           'sourceLatitude':cr.latitude,
           'sourceLongitude':cr.longitude,
           'destinationLatitude':crds[i].latitude,
           'destinationLongitude':crds[i].longitude,
           'status':'Finding',
+          'uid':user.uid
         };
       }else{
         ride = {
@@ -133,13 +140,14 @@ class _BookingFormState extends State<BookingForm> {
           'passengerPhone': _phoneController[i].text.trim(),
           'destination': _lController.text.trim(),
           'source':_locationController[i].text.trim(),
-          'type':selectedCab[i],
+          // 'type':selectedCab[i],
           'cost':cost1[i],
           'sourceLatitude':crds[i].latitude,
           'sourceLongitude':crds[i].longitude,
           'destinationLatitude':cr.latitude,
           'destinationLongitude':cr.longitude,
           'status':'Finding',
+          'uid':user.uid
         };
       }
       await requestPool.child(randId).set(ride).whenComplete(() => cnt++);
@@ -164,15 +172,15 @@ class _BookingFormState extends State<BookingForm> {
       };
     }
     await userRequest.update(map);
+    setState(() {
+      load=false;
+    });
     if(cnt==widget.cabsCount){
       Fluttertoast.showToast(msg: 'Cabs confirmed');
       Navigator.pop(context);
     }else{
       Fluttertoast.showToast(msg: 'Please try again');
     }
-    setState(() {
-      load=false;
-    });
   }
 
 
@@ -180,7 +188,7 @@ class _BookingFormState extends State<BookingForm> {
     await determineCost();
     return await showDialog(context: context, builder: (context){
       return StatefulBuilder(builder: (context,setState){
-        return Dialog(
+        return load?spinkit:Dialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.0)),
           child: Container(
               height: 150.0,
@@ -250,7 +258,6 @@ class _BookingFormState extends State<BookingForm> {
                               //
                               // },
                               onTap: ()async{
-                                Navigator.pop(context);
                                 setState(() {
                                   load = true;
                                 });
@@ -454,62 +461,62 @@ class _BookingFormState extends State<BookingForm> {
                           keyboardType: TextInputType.number,
                         ),
                       ),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                        child: Container(
-                          child: DropdownButtonFormField(
-                            value: selectedCab[pos],
-                            onChanged: (val) {
-                              setState(() {
-                                selectedCab[pos] = val;
-                              });
-                            },
-                            decoration: InputDecoration(
-                              labelText: "Type",
-                              labelStyle: GoogleFonts.workSans(fontSize: 14),
-                            ),
-                            style: GoogleFonts.workSans(
-                                color: Colors.black, fontSize: 14),
-                            items: [
-                              DropdownMenuItem(
-                                child: Text(
-                                  'Auto',
-                                  style: GoogleFonts.workSans(fontSize: 14),
-                                ),
-                                value: 'Auto',
-                              ),
-                              DropdownMenuItem(
-                                child: Text(
-                                  'Go',
-                                  style: GoogleFonts.workSans(fontSize: 14),
-                                ),
-                                value: 'Go',
-                              ),
-                              DropdownMenuItem(
-                                child: Text(
-                                  'Sedan',
-                                  style: GoogleFonts.workSans(fontSize: 14),
-                                ),
-                                value: 'Sedan',
-                              ),
-                              DropdownMenuItem(
-                                child: Text(
-                                  'Premier',
-                                  style: GoogleFonts.workSans(fontSize: 14),
-                                ),
-                                value: 'Premier',
-                              ),
-                              DropdownMenuItem(
-                                child: Text(
-                                  'XL',
-                                  style: GoogleFonts.workSans(fontSize: 14),
-                                ),
-                                value: 'XL',
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      // Padding(
+                      //   padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                      //   child: Container(
+                      //     child: DropdownButtonFormField(
+                      //       value: selectedCab[pos],
+                      //       onChanged: (val) {
+                      //         setState(() {
+                      //           selectedCab[pos] = val;
+                      //         });
+                      //       },
+                      //       decoration: InputDecoration(
+                      //         labelText: "Type",
+                      //         labelStyle: GoogleFonts.workSans(fontSize: 14),
+                      //       ),
+                      //       style: GoogleFonts.workSans(
+                      //           color: Colors.black, fontSize: 14),
+                      //       items: [
+                      //         DropdownMenuItem(
+                      //           child: Text(
+                      //             'Auto',
+                      //             style: GoogleFonts.workSans(fontSize: 14),
+                      //           ),
+                      //           value: 'Auto',
+                      //         ),
+                      //         DropdownMenuItem(
+                      //           child: Text(
+                      //             'Go',
+                      //             style: GoogleFonts.workSans(fontSize: 14),
+                      //           ),
+                      //           value: 'Go',
+                      //         ),
+                      //         DropdownMenuItem(
+                      //           child: Text(
+                      //             'Sedan',
+                      //             style: GoogleFonts.workSans(fontSize: 14),
+                      //           ),
+                      //           value: 'Sedan',
+                      //         ),
+                      //         DropdownMenuItem(
+                      //           child: Text(
+                      //             'Premier',
+                      //             style: GoogleFonts.workSans(fontSize: 14),
+                      //           ),
+                      //           value: 'Premier',
+                      //         ),
+                      //         DropdownMenuItem(
+                      //           child: Text(
+                      //             'XL',
+                      //             style: GoogleFonts.workSans(fontSize: 14),
+                      //           ),
+                      //           value: 'XL',
+                      //         ),
+                      //       ],
+                      //     ),
+                      //   ),
+                      // ),
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                         child: TextField(
