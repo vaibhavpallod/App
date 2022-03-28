@@ -4,6 +4,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:location/location.dart';
+import 'package:uber_hacktag_group_booking/Driver/TrackRouteDriver.dart';
 
 import '../konstants/loaders.dart';
 
@@ -16,8 +17,7 @@ class Requests extends StatefulWidget {
   _RequestsState createState() => _RequestsState();
 }
 
-class _RequestsState extends State<Requests>
-    with SingleTickerProviderStateMixin {
+class _RequestsState extends State<Requests> with SingleTickerProviderStateMixin {
   bool load = true;
   AnimationController _animationController;
   Animation _colorTween;
@@ -32,10 +32,8 @@ class _RequestsState extends State<Requests>
     super.initState();
     mofRequests = List();
     mofKeys = List();
-    _animationController = AnimationController(
-        vsync: this, duration: Duration(milliseconds: 2000));
-    _colorTween = ColorTween(begin: Colors.red, end: Colors.black54)
-        .animate(_animationController);
+    _animationController = AnimationController(vsync: this, duration: Duration(milliseconds: 2000));
+    _colorTween = ColorTween(begin: Colors.red, end: Colors.black54).animate(_animationController);
     getData();
   }
 
@@ -59,11 +57,8 @@ class _RequestsState extends State<Requests>
                 double destinationLongitude = element['destinationLongitude'];
                 double destinationLatitude = element['destinationLatitude'];
 
-                double distanceInMeters = Geolocator.distanceBetween(
-                    destinationLatitude,
-                    destinationLongitude,
-                    widget.location.latitude,
-                    widget.location.longitude);
+                double distanceInMeters = Geolocator.distanceBetween(destinationLatitude,
+                    destinationLongitude, widget.location.latitude, widget.location.longitude);
                 element['distance'] = distanceInMeters;
 
                 mofRequests.add(element as Map); // = value.value,
@@ -109,8 +104,7 @@ class _RequestsState extends State<Requests>
                 itemBuilder: (BuildContext context, int index) {
                   Map request = mofRequests[index];
                   return Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 3.0, vertical: 3.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 3.0, vertical: 3.0),
                     child: Card(
                       color: Colors.grey.shade100,
                       // elevation: 5.0,
@@ -137,18 +131,15 @@ class _RequestsState extends State<Requests>
                               child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text("Phone: " +
-                                  request['passengerPhone'].toString()),
+                              Text("Phone: " + request['passengerPhone'].toString()),
                               AnimatedBuilder(
                                   animation: _colorTween,
                                   builder: (context, child) => Row(
                                         children: [
                                           Text("Distance: "),
                                           Text(
-                                            (int.parse((request['distance'] !=
-                                                                null
-                                                            ? request[
-                                                                'distance']
+                                            (int.parse((request['distance'] != null
+                                                            ? request['distance']
                                                             : "0000")
                                                         .toString()
                                                         .substring(0, 3))
@@ -160,10 +151,7 @@ class _RequestsState extends State<Requests>
                                           )
                                         ],
                                       )),
-                              Text("Location: " +
-                                  request['destination']
-                                      .toString()
-                                      .substring(15)),
+                              Text("Location: " + request['destination'].toString().substring(15)),
                               // Text("Email: " +
                               //     request['passengerEmail'].toString()),
                               // Text(consumer['status']),
@@ -173,8 +161,7 @@ class _RequestsState extends State<Requests>
                               ? Container(
                                   child: Row(
                                     // mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.center,
                                     mainAxisSize: MainAxisSize.min,
                                     // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                     children: [
@@ -222,13 +209,10 @@ class _RequestsState extends State<Requests>
                               : Container(
                                   child: ElevatedButton(
                                     style: ButtonStyle(
-                                      elevation:
-                                          MaterialStateProperty.all(10.0),
-                                      shape: MaterialStateProperty.all<
-                                          RoundedRectangleBorder>(
+                                      elevation: MaterialStateProperty.all(10.0),
+                                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                                         RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10.0),
+                                          borderRadius: BorderRadius.circular(10.0),
                                           side: BorderSide(
                                             color: Colors.grey,
                                             width: 2.0,
@@ -236,13 +220,19 @@ class _RequestsState extends State<Requests>
                                         ),
                                       ),
                                       backgroundColor:
-                                          MaterialStateProperty.all(
-                                              Colors.grey.shade800),
+                                          MaterialStateProperty.all(Colors.grey.shade800),
                                     ),
                                     child: Text(
-                                      'track',
+                                      'Map',
                                       style: TextStyle(color: Colors.white),
                                     ),
+                                    onPressed: () => {
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (BuildContext context) =>
+                                                  TrackRouteDriver(request, mofKeys, index)))
+                                    },
                                   ),
                                 ),
                           // : Row(
@@ -288,23 +278,19 @@ class _RequestsState extends State<Requests>
     temprequest['status'] = 'Booking';
     temprequest['driverLatitude'] = widget.location.latitude;
     temprequest['driverLongitude'] = widget.location.longitude;
-    var email=request['passengerEmail'];
+    var email = request['passengerEmail'];
     setState(() {
-      load=true;
+      load = true;
     });
-    var res = await http.get(Uri.parse("https://us-central1-uber-hacktag-group-booking.cloudfunctions.net/sendMail?dest=$email&uid=$requestKey"));
+    var res = await http.get(Uri.parse(
+        "https://us-central1-uber-hacktag-group-booking.cloudfunctions.net/sendMail?dest=$email&uid=$requestKey"));
     print(res.body);
-    databaseReference
-        .child('requestPool')
-        .child(requestKey)
-        .set(temprequest)
-        .whenComplete(() => {
-              setState(() {
-                load=false;
-                _showMessege("Accepted");
-
-              }),
-            });
+    databaseReference.child('requestPool').child(requestKey).set(temprequest).whenComplete(() => {
+          setState(() {
+            load = false;
+            _showMessege("Accepted");
+          }),
+        });
   }
 
   // String message = "This is a test message!";
@@ -316,7 +302,6 @@ class _RequestsState extends State<Requests>
     //   print(onError);
     // });
     // print(_result);
-
   }
 
   _showMessege(String msg) {

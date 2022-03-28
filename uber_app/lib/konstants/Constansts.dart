@@ -39,5 +39,5 @@ const dummyPlaceHolder = "images/placeholder.jpg";
 const String fontName = 'Roboto';
 
 const int currentIndex = 3;
-
+const API_KEY = "AIzaSyAvyfarjvVHlKhaOJtZzGzHUtTN55Mouzo";
 // }
