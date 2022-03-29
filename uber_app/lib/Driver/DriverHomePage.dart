@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -118,11 +119,17 @@ class _DriverHomePageState extends State<DriverHomePage> {
   }
 
   Future<void> getLatLongfromRequestPool(String status) async {
-    String id=await storage.read(key: 'id');
-
+    String uid=FirebaseAuth.instance.currentUser.uid;
+    DatabaseReference driverRef=FirebaseDatabase.instance.ref().child('drivers').child(uid);
+    DataSnapshot ds=await driverRef.child('activeRide').get();
+    Map map=ds.value;
+    print(map);
     var res = await http.get(
         Uri.parse("https://uber-hacktag76.herokuapp.com/getLoc/"),
-        headers: {"id": id});
+        headers: {"id": map['id']});
+    print("https://uber-hacktag76.herokuapp.com/getLoc/");
+    print(map['id']);
+    print(res.body);
     Map<String, dynamic> responseMap = json.decode(res.body)['location'];
     print(responseMap);
     SOURCE_LOCATION = LatLng(responseMap['driverLatitude'], responseMap['driverLongitude']);
@@ -131,7 +138,9 @@ class _DriverHomePageState extends State<DriverHomePage> {
     }else{
       DEST_LOCATION = LatLng(responseMap['destinationLatitude'], responseMap['destinationLatitude']);
     }
-
+    print('wtf bro');
+    print(SOURCE_LOCATION);
+    print(DEST_LOCATION);
     // SOURCE_LOCATION = LatLng(_originLatitude, _originLongitude);
     // DEST_LOCATION = LatLng(_destLatitude, _destLongitude);
 
@@ -202,41 +211,46 @@ class _DriverHomePageState extends State<DriverHomePage> {
     // print(polylines);
   }
 
-  // changeStatus(){
-  //   Map<dynamic, dynamic> temprequest = request;
-  //
-  //   DatabaseReference allUserreference =
-  //   FirebaseDatabase.instance.ref().child('allusers').child(request['uid']).child('rides');
-  //
-  //   String requestKey = listOFKeys[index];
-  //   temprequest['status'] = 'Booked';
-  //   temprequest['driverLatitude'] = location.latitude;
-  //   temprequest['driverLongitude'] = location.longitude;
-  //   temprequest['otp'] = generateOTP();
-  //   var email = request['passengerEmail'];
-  //   setState(() {
-  //     load = true;
-  //   });
-  //   var res = await http.get(Uri.parse(
-  //       "https://us-central1-uber-hacktag-group-booking.cloudfunctions.net/sendMail?dest=$email&uid=$requestKey"));
-  //   print(res.body);
-  //   databaseReference.child('requestPool').child(requestKey).set(temprequest).whenComplete(() => {
-  //     allUserreference
-  //         .child(temprequest['gloabalRequestID'])
-  //         .child(requestKey)
-  //         .set(temprequest)
-  //         .whenComplete(() => {
-  //       storage.write(key: 'status', value: 'booked').whenComplete(()async{
-  //         await storage.write(key: 'id', value: requestKey);
-  //         await getDriverLocation();
-  //         _showMessege('Accepted');
-  //         setState(() {
-  //           load=false;
-  //         });
-  //       })
-  //     }),
-  //   });
-  // }
+  changeStatus(String status)async{
+    String uid=FirebaseAuth.instance.currentUser.uid;
+    DatabaseReference driverRef=FirebaseDatabase.instance.ref().child('drivers').child(uid);
+    DataSnapshot ds=await driverRef.child('activeRide').get();
+    Map request=ds.value;
+    String requestKey=request['id'];
+    print(requestKey);
+    print(request);
+    Map<String, dynamic> temprequest={
+      'status':status
+    };
+
+    DatabaseReference allUserreference =
+    FirebaseDatabase.instance.ref().child('allusers').child(request['uid']).child('rides');
+
+    setState(() {
+      load = true;
+    });
+    databaseReference.child('requestPool').child(requestKey).update(temprequest).whenComplete(() => {
+      allUserreference
+          .child(request['gloabalRequestID'])
+          .child(requestKey)
+          .update(temprequest)
+          .whenComplete(() => {
+        storage.write(key: 'status', value: status).whenComplete(()async{
+         if(status=='Riding') {
+           await driverRef.child('activeRide').update(temprequest);
+         }else{
+           await driverRef.child('activeRide').remove();
+           await storage.delete(key: 'status');
+         }
+         await getDriverLocation();
+         _showMessege('Accepted');
+          setState(() {
+            load=false;
+          });
+        })
+      }),
+    });
+  }
 
 
    setSourceAndDestinationIcons() async {
@@ -270,13 +284,11 @@ class _DriverHomePageState extends State<DriverHomePage> {
     else{
       status=await storage.read(key: 'status');
       print(status);
-      if(status=='booked') {
         await getLatLongfromRequestPool(status);
         print('hello');
         setState(() {
           load = false;
         });
-      }
     }
     // setState(() {
     //   load = false;
@@ -298,8 +310,9 @@ class _DriverHomePageState extends State<DriverHomePage> {
 
 
   Future<bool> checkOTP()async{
-    String id=await storage.read(key: 'id');
-    DataSnapshot ds=await databaseReference.child('requestPool').child(id).get();
+    String uid=FirebaseAuth.instance.currentUser.uid;
+    DatabaseReference driverRef=FirebaseDatabase.instance.ref().child('drivers').child(uid);
+    DataSnapshot ds=await driverRef.child('activeRide').get();
     Map map=ds.value;
     print(map['otp']);
     return map['otp']==int.parse(finalCode);
@@ -323,7 +336,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
                       controller.setMapStyle(Utils.mapStyles);
                       _controller.complete(controller);
                     },
-                    polylines: status=='booked'? Set<Polyline>.of(polylines.values):{},
+                    polylines: status=='booked'||status=='Riding'? Set<Polyline>.of(polylines.values):{},
                     zoomControlsEnabled: false,
                     initialCameraPosition: status=='Finding'?CameraPosition(
                       target: LatLng(location.latitude ?? 0.0, location.longitude ?? 0.0),
@@ -356,7 +369,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
                         },
                       ),
                     ),
-                  ):Align(
+                  ):status!='Riding'?Align(
                     alignment: Alignment.bottomCenter,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
@@ -447,7 +460,12 @@ class _DriverHomePageState extends State<DriverHomePage> {
                                         });
                                         bool otpCorrect = await checkOTP();
                                         if(otpCorrect){
-
+                                          await changeStatus('Riding');
+                                        }else{
+                                          _showMessege('Please enter correct OTP');
+                                          setState(() {
+                                            load=false;
+                                          });
                                         }
                                       }
                                     },
@@ -471,7 +489,38 @@ class _DriverHomePageState extends State<DriverHomePage> {
                         ),
                       ),
                     ),
-                  )
+                  ):Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 8),
+                      child: Material(
+                        color: Colors.black,
+                        elevation: 15,
+                        borderRadius: BorderRadius.all(Radius.circular(20)),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: SliderButton(
+                            action: ()async{
+                              await changeStatus('Completed');
+                            },
+                            icon: Center(
+                              child: Icon(
+                                Icons.local_taxi,
+                                color: Colors.black,
+                              ),
+                            ),
+                            label: Text(
+                              "Slide to Complete",
+                              style: GoogleFonts.workSans(color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w400),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -723,6 +772,8 @@ class _DriverHomePageState extends State<DriverHomePage> {
 
     DatabaseReference allUserreference =
         FirebaseDatabase.instance.ref().child('allusers').child(request['uid']).child('rides');
+    String uid=FirebaseAuth.instance.currentUser.uid;
+    DatabaseReference driverRef=FirebaseDatabase.instance.ref().child('drivers').child(uid);
 
     String requestKey = listOFKeys[index];
     temprequest['status'] = 'Booked';
@@ -741,14 +792,14 @@ class _DriverHomePageState extends State<DriverHomePage> {
               .child(temprequest['gloabalRequestID'])
               .child(requestKey)
               .set(temprequest)
-              .whenComplete(() => {
-                storage.write(key: 'status', value: 'booked').whenComplete(()async{
-                  await storage.write(key: 'id', value: requestKey);
-                   await getDriverLocation();
-                   _showMessege('Accepted');
-                   setState(() {
-                     load=false;
-                   });
+              .whenComplete(() =>{
+                temprequest['id']=requestKey,
+                driverRef.child('activeRide').set(temprequest).whenComplete(()async{
+                  await storage.write(key: 'status', value: 'booked');
+                  await getDriverLocation();
+                  setState(() {
+                    load=false;
+                  });
                 })
                   }),
         });
