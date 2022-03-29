@@ -10,11 +10,17 @@ import 'package:uber_hacktag_group_booking/Driver/Requests.dart';
 import 'package:uber_hacktag_group_booking/pages/MainHomePage.dart';
 
 import 'Enter/login.dart';
+import 'RandomUser/MyUserApp.dart';
 import 'konstants/loaders.dart';
 import 'konstants/size_config.dart';
 
 void main() {
   runApp(MyApp());
+}
+
+void anotherMain() {
+  print('another main man');
+  runApp(MyUserApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -50,8 +56,7 @@ class App extends StatelessWidget {
     await Firebase.initializeApp();
     // CollectionReference userCol =
     //     FirebaseFirestore.instance.collection('allusers');
-    DatabaseReference allUsersDatabaseReference =
-        FirebaseDatabase.instance.ref().child('allusers');
+    DatabaseReference allUsersDatabaseReference = FirebaseDatabase.instance.ref().child('allusers');
 
     if (FirebaseAuth.instance.currentUser != null) {
       print('MAIN: current user id' + FirebaseAuth.instance.currentUser.uid);
@@ -105,8 +110,7 @@ class App extends StatelessWidget {
 
               // print('abcMain${snapshot.data}');
               if (snapshot.hasError) {
-                return Text("Something Went Wrong",
-                    textDirection: TextDirection.ltr);
+                return Text("Something Went Wrong", textDirection: TextDirection.ltr);
               }
 
               // Once complete, show your application
