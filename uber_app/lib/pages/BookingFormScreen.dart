@@ -1,27 +1,27 @@
 import 'dart:convert';
+import 'dart:convert' show utf8;
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:geocoder/geocoder.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:uber_hacktag_group_booking/konstants/loaders.dart';
 import 'package:uber_hacktag_group_booking/pages/MainHomePage.dart';
 import 'package:uuid/uuid.dart';
+
 import '../Enter/place_service.dart';
 import '../address_search.dart';
-import 'package:geocoder/geocoder.dart';
-import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert' show utf8;
 
 class BookingForm extends StatefulWidget {
   int cabsCount;
@@ -53,15 +53,16 @@ class _BookingFormState extends State<BookingForm> {
   bool timeEmpty = false;
   Coordinates cr;
   FirebaseFirestore firestore = FirebaseFirestore.instance;
-  DatabaseReference requestPool =
-      FirebaseDatabase.instance.ref().child('requestPool');
+  DatabaseReference requestPool = FirebaseDatabase.instance.ref().child('requestPool');
   List<int> cost1;
   double cost;
   bool load = false;
+  List<Map<dynamic, dynamic>> fileMap;
 
   @override
   void initState() {
     // TODO: implement initState
+    fileMap = [];
     for (int i = 0; i < widget.cabsCount; i++) {
       nameEmpty.add(false);
       emailEmpty.add(false);
@@ -98,9 +99,8 @@ class _BookingFormState extends State<BookingForm> {
   double calculateDistance(lat1, lon1, lat2, lon2) {
     var p = 0.017453292519943295;
     var c = cos;
-    var a = 0.5 -
-        c((lat2 - lat1) * p) / 2 +
-        c(lat1 * p) * c(lat2 * p) * (1 - c((lon2 - lon1) * p)) / 2;
+    var a =
+        0.5 - c((lat2 - lat1) * p) / 2 + c(lat1 * p) * c(lat2 * p) * (1 - c((lon2 - lon1) * p)) / 2;
     var res = 12742 * asin(sqrt(a));
     print("hello");
     print(res);
@@ -113,18 +113,16 @@ class _BookingFormState extends State<BookingForm> {
     });
     cost1 = [];
     cost = 0;
-    var src =
-        await Geocoder.local.findAddressesFromQuery(_lController.text.trim());
+    var src = await Geocoder.local.findAddressesFromQuery(_lController.text.trim());
     Coordinates c = src.first.coordinates;
     cr = c;
     for (int i = 0; i < widget.cabsCount; i++) {
-      var src1 = await Geocoder.local
-          .findAddressesFromQuery(_locationController[i].text.trim());
+      var src1 = await Geocoder.local.findAddressesFromQuery(_locationController[i].text.trim());
       Coordinates coordinates = await src1.first.coordinates;
-      int res = (calculateDistance(c.latitude, c.longitude,
-                  coordinates.latitude, coordinates.longitude) *
-              20)
-          .ceil();
+      int res =
+          (calculateDistance(c.latitude, c.longitude, coordinates.latitude, coordinates.longitude) *
+                  20)
+              .ceil();
       cost1.add(res);
       crds.add(coordinates);
       cost = cost + res;
@@ -141,7 +139,7 @@ class _BookingFormState extends State<BookingForm> {
       allowedExtensions: ['csv', 'xlsx'],
     );
     File file = File(result.files.single.path);
-    var encryptedBase64EncodedString=await file.readAsString(encoding:utf8);
+    var encryptedBase64EncodedString = await file.readAsString(encoding: utf8);
     print(encryptedBase64EncodedString);
     // final input = file.openRead();
     // final fields = await input.transform(Utf8Decoder()).transform(new CsvToListConverter()).toList();
@@ -163,18 +161,47 @@ class _BookingFormState extends State<BookingForm> {
     var response = await request.send();
     // Utf8Decoder(
     print(response.headers);
-    http.Response res=await http.Response.fromStream(response);
+    http.Response res = await http.Response.fromStream(response);
     print(res.statusCode);
-    print(res.body);
+    print("FILE PRINT BODY " + res.body);
 
-    Uint8List u=latin1.encode(res.body);
+    Uint8List u = latin1.encode(res.body);
     if (response.statusCode == 200) {
+      List tempMap = json.decode(res.body);
+      tempMap.forEach((element) {
+        fileMap.add(element);
+      });
+
+      fileMap.forEach((element) {
+        print("FILE PRINT " + element.toString());
+      });
+
+      for (int i = 0; i < widget.cabsCount; i++) {
+        _nameController[i].text = fileMap[i]['Name'];
+        _phoneController[i].text = fileMap[i]['Phone'].toString();
+        _emailController[i].text = fileMap[i]['Email'];
+        _locationController[i].text = fileMap[i]['Address'];
+        // [i].text=fileMap[i]['Address'];
+
+        // var src1 = await Geocoder.local
+        //     .findAddressesFromQuery(_locationController[i].text.trim());
+        // Coordinates coordinates = await src1.first.coordinates;
+        // int res = (calculateDistance(c.latitude, c.longitude,
+        //     coordinates.latitude, coordinates.longitude) *
+        //     20)
+        //     .ceil();
+        // cost1.add(res);
+        // crds.add(coordinates);
+        // cost = cost + res;
+
+      }
+
       setState(() {
-        _nameController[0].text=res.body;
+        // _nameController[0].text=res.body;
       });
       print('Uploaded!');
-    };
-
+    }
+    ;
   }
 
   addAllRidesToRequestPool() async {
@@ -193,8 +220,7 @@ class _BookingFormState extends State<BookingForm> {
       double dist = Geolocator.distanceBetween(
               cr.latitude, cr.longitude, crds[i].latitude, crds[i].longitude) /
           1000;
-      scheduleTime =
-          scheduleTime.subtract(Duration(minutes: (dist * 1.5).ceil()));
+      scheduleTime = scheduleTime.subtract(Duration(minutes: (dist * 1.5).ceil()));
       print(scheduleTime);
       if (widget.originSame) {
         ride = {
@@ -259,10 +285,8 @@ class _BookingFormState extends State<BookingForm> {
     await userRequest.update(map);
     if (cnt == widget.cabsCount) {
       Fluttertoast.showToast(msg: 'Cabs confirmed');
-      Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (BuildContext context) => MainHomePage()),
-          (route) => false);
+      Navigator.pushAndRemoveUntil(context,
+          MaterialPageRoute(builder: (BuildContext context) => MainHomePage()), (route) => false);
     } else {
       Fluttertoast.showToast(msg: 'Please try again');
     }
@@ -277,8 +301,7 @@ class _BookingFormState extends State<BookingForm> {
             return load
                 ? spinkit
                 : Dialog(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(5.0)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.0)),
                     child: Container(
                         height: 150.0,
                         child: Center(
@@ -287,8 +310,7 @@ class _BookingFormState extends State<BookingForm> {
                             children: <Widget>[
                               Container(
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
-                                      top: 30, left: 8, right: 8),
+                                  padding: const EdgeInsets.only(top: 30, left: 8, right: 8),
                                   child: Text(
                                     'The cost for the group booking will be \u{20B9} ${cost.round()}',
                                     style: GoogleFonts.workSans(
@@ -302,8 +324,7 @@ class _BookingFormState extends State<BookingForm> {
                               Padding(
                                 padding: const EdgeInsets.only(top: 8),
                                 child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
+                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                   children: <Widget>[
                                     Expanded(
                                       child: GestureDetector(
@@ -313,9 +334,8 @@ class _BookingFormState extends State<BookingForm> {
                                         child: Container(
                                           decoration: BoxDecoration(
                                             color: Colors.white,
-                                            borderRadius: BorderRadius.only(
-                                                bottomLeft:
-                                                    Radius.circular(5.0)),
+                                            borderRadius:
+                                                BorderRadius.only(bottomLeft: Radius.circular(5.0)),
                                           ),
                                           child: Padding(
                                             padding: const EdgeInsets.all(12.0),
@@ -356,15 +376,14 @@ class _BookingFormState extends State<BookingForm> {
                                           });
                                           await addAllRidesToRequestPool();
                                           setState(() {
-                                            load = true;
+                                            load = false;
                                           });
                                         },
                                         child: Container(
                                           decoration: BoxDecoration(
                                             color: Colors.black,
                                             borderRadius: BorderRadius.only(
-                                                bottomRight:
-                                                    Radius.circular(5.0)),
+                                                bottomRight: Radius.circular(5.0)),
                                           ),
                                           child: Padding(
                                             padding: const EdgeInsets.all(12.0),
@@ -431,8 +450,7 @@ class _BookingFormState extends State<BookingForm> {
                 onTap: () async {
                   bool a = false;
                   for (int i = 0; i < widget.cabsCount; i++) {
-                    if (_nameController[i].text == null ||
-                        _nameController[i].text.trim().isEmpty) {
+                    if (_nameController[i].text == null || _nameController[i].text.trim().isEmpty) {
                       setState(() {
                         nameEmpty[i] = true;
                       });
@@ -476,8 +494,7 @@ class _BookingFormState extends State<BookingForm> {
                       });
                     }
                   }
-                  if (_lController.text == null ||
-                      _lController.text.trim().isEmpty) {
+                  if (_lController.text == null || _lController.text.trim().isEmpty) {
                     setState(() {
                       lEmpty = true;
                     });
@@ -527,70 +544,53 @@ class _BookingFormState extends State<BookingForm> {
                               child: Text(
                                 'Cab ${pos + 1} primary passenger',
                                 style: GoogleFonts.workSans(
-                                    color: Colors.black,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500),
+                                    color: Colors.black, fontSize: 16, fontWeight: FontWeight.w500),
                                 textAlign: TextAlign.start,
                               ),
                             ),
                             Padding(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 8),
+                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                               child: TextField(
                                 controller: _nameController[pos],
-                                style: GoogleFonts.workSans(
-                                    color: Colors.black, fontSize: 14),
+                                style: GoogleFonts.workSans(color: Colors.black, fontSize: 14),
                                 decoration: InputDecoration(
                                     border: OutlineInputBorder(),
                                     labelText: "Name",
-                                    errorText: nameEmpty[pos]
-                                        ? 'Please provide name'
-                                        : null,
+                                    errorText: nameEmpty[pos] ? 'Please provide name' : null,
                                     focusColor: Colors.black,
-                                    labelStyle:
-                                        GoogleFonts.workSans(fontSize: 14),
-                                    errorStyle: GoogleFonts.workSans(
-                                        fontSize: 10, color: Colors.red)),
+                                    labelStyle: GoogleFonts.workSans(fontSize: 14),
+                                    errorStyle:
+                                        GoogleFonts.workSans(fontSize: 10, color: Colors.red)),
                               ),
                             ),
                             Padding(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 8),
+                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                               child: TextField(
                                 controller: _emailController[pos],
-                                style: GoogleFonts.workSans(
-                                    color: Colors.black, fontSize: 14),
+                                style: GoogleFonts.workSans(color: Colors.black, fontSize: 14),
                                 decoration: InputDecoration(
                                     border: OutlineInputBorder(),
                                     labelText: "Email",
-                                    errorText: emailEmpty[pos]
-                                        ? 'Please provide email'
-                                        : null,
+                                    errorText: emailEmpty[pos] ? 'Please provide email' : null,
                                     focusColor: Colors.black,
-                                    labelStyle:
-                                        GoogleFonts.workSans(fontSize: 14),
-                                    errorStyle: GoogleFonts.workSans(
-                                        fontSize: 10, color: Colors.red)),
+                                    labelStyle: GoogleFonts.workSans(fontSize: 14),
+                                    errorStyle:
+                                        GoogleFonts.workSans(fontSize: 10, color: Colors.red)),
                               ),
                             ),
                             Padding(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 8),
+                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                               child: TextField(
                                 controller: _phoneController[pos],
-                                style: GoogleFonts.workSans(
-                                    color: Colors.black, fontSize: 14),
+                                style: GoogleFonts.workSans(color: Colors.black, fontSize: 14),
                                 decoration: InputDecoration(
                                     border: OutlineInputBorder(),
-                                    errorText: phoneEmpty[pos]
-                                        ? 'Please provide phone'
-                                        : null,
+                                    errorText: phoneEmpty[pos] ? 'Please provide phone' : null,
                                     labelText: "Phone",
                                     focusColor: Colors.black,
-                                    labelStyle:
-                                        GoogleFonts.workSans(fontSize: 14),
-                                    errorStyle: GoogleFonts.workSans(
-                                        fontSize: 10, color: Colors.red)),
+                                    labelStyle: GoogleFonts.workSans(fontSize: 14),
+                                    errorStyle:
+                                        GoogleFonts.workSans(fontSize: 10, color: Colors.red)),
                                 keyboardType: TextInputType.number,
                               ),
                             ),
@@ -651,8 +651,7 @@ class _BookingFormState extends State<BookingForm> {
                             //   ),
                             // ),
                             Padding(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 8),
+                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                               child: TextField(
                                 readOnly: true,
                                 controller: _locationController[pos],
@@ -665,30 +664,23 @@ class _BookingFormState extends State<BookingForm> {
                                   );
                                   // This will change the text displayed in the TextField
                                   if (result != null) {
-                                    final placeDetails = await PlaceApiProvider(
-                                            sessionToken)
+                                    final placeDetails = await PlaceApiProvider(sessionToken)
                                         .getPlaceDetailFromId(result.placeId);
                                     setState(() {
-                                      _locationController[pos].text =
-                                          result.description;
+                                      _locationController[pos].text = result.description;
                                     });
                                   }
                                 },
-                                style: GoogleFonts.workSans(
-                                    color: Colors.black, fontSize: 14),
+                                style: GoogleFonts.workSans(color: Colors.black, fontSize: 14),
                                 decoration: InputDecoration(
-                                  errorText: locEmpty[pos]
-                                      ? 'Please provide location'
-                                      : null,
-                                  errorStyle: GoogleFonts.workSans(
-                                      fontSize: 10, color: Colors.red),
+                                  errorText: locEmpty[pos] ? 'Please provide location' : null,
+                                  errorStyle: GoogleFonts.workSans(fontSize: 10, color: Colors.red),
                                   border: OutlineInputBorder(),
                                   labelText: widget.originSame
                                       ? 'Destination Location'
                                       : 'Origin Location',
                                   focusColor: Colors.black,
-                                  labelStyle:
-                                      GoogleFonts.workSans(fontSize: 14),
+                                  labelStyle: GoogleFonts.workSans(fontSize: 14),
                                 ),
                                 keyboardType: TextInputType.number,
                               ),
@@ -714,24 +706,19 @@ class _BookingFormState extends State<BookingForm> {
                       );
                       // This will change the text displayed in the TextField
                       if (result != null) {
-                        final placeDetails =
-                            await PlaceApiProvider(sessionToken)
-                                .getPlaceDetailFromId(result.placeId);
+                        final placeDetails = await PlaceApiProvider(sessionToken)
+                            .getPlaceDetailFromId(result.placeId);
                         setState(() {
                           _lController.text = result.description;
                         });
                       }
                     },
-                    style:
-                        GoogleFonts.workSans(color: Colors.black, fontSize: 14),
+                    style: GoogleFonts.workSans(color: Colors.black, fontSize: 14),
                     decoration: InputDecoration(
-                      errorStyle:
-                          GoogleFonts.workSans(fontSize: 10, color: Colors.red),
+                      errorStyle: GoogleFonts.workSans(fontSize: 10, color: Colors.red),
                       errorText: lEmpty ? 'Please provide location' : null,
                       border: OutlineInputBorder(),
-                      labelText: !widget.originSame
-                          ? 'Destination Location'
-                          : 'Origin Location',
+                      labelText: !widget.originSame ? 'Destination Location' : 'Origin Location',
                       focusColor: Colors.black,
                       labelStyle: GoogleFonts.workSans(fontSize: 14),
                     ),
@@ -739,32 +726,27 @@ class _BookingFormState extends State<BookingForm> {
                   ),
                 ),
                 Padding(
-                  padding:
-                      EdgeInsets.only(left: 8, right: 8, top: 8, bottom: 18),
+                  padding: EdgeInsets.only(left: 8, right: 8, top: 8, bottom: 18),
                   child: TextField(
                     controller: _timeC,
                     onTap: () {
                       DatePicker.showDateTimePicker(context,
-                          minTime: DateTime.now(),
-                          currentTime: DateTime.now(), onChanged: (date) {
+                          minTime: DateTime.now(), currentTime: DateTime.now(), onChanged: (date) {
                         setState(() {
-                          _timeC.text =
-                              DateFormat.yMMMMd('en_US').add_jm().format(date);
+                          _timeC.text = DateFormat.yMMMMd('en_US').add_jm().format(date);
                           scheduleTime = date;
                         });
                       });
                     },
                     readOnly: true,
-                    style:
-                        GoogleFonts.workSans(color: Colors.black, fontSize: 14),
+                    style: GoogleFonts.workSans(color: Colors.black, fontSize: 14),
                     decoration: InputDecoration(
                         border: OutlineInputBorder(),
                         errorText: timeEmpty ? 'Please provide time' : null,
                         labelText: "Scheduled Time",
                         focusColor: Colors.black,
                         labelStyle: GoogleFonts.workSans(fontSize: 14),
-                        errorStyle: GoogleFonts.workSans(
-                            fontSize: 10, color: Colors.red)),
+                        errorStyle: GoogleFonts.workSans(fontSize: 10, color: Colors.red)),
                     keyboardType: TextInputType.number,
                   ),
                 ),
