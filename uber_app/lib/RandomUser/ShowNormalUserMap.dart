@@ -78,6 +78,8 @@ class _ShowNormalUserMapState extends State<ShowNormalUserMap> {
       if (event.snapshot.key == 'status') {
         setState(() {
           load = true;
+          polylines = {};
+          polylineCoordinates=[];
         });
         responseMap['status'] = event.snapshot.value.toString();
         if (responseMap['status'] == 'Riding') {
@@ -112,7 +114,7 @@ class _ShowNormalUserMapState extends State<ShowNormalUserMap> {
     //   data = "Android is not responding please check the code";
     //   print("from SHOWMAP printing DART" + data);
     // }
-    getLatLongfromRequestPool();
+    await getLatLongfromRequestPool();
     // setState(() {
     //   load=false;
     // });
@@ -138,9 +140,14 @@ class _ShowNormalUserMapState extends State<ShowNormalUserMap> {
                   LatLng(responseMap["sourceLatitude"], responseMap["sourceLongitude"]),
               DEST_LOCATION =
                   LatLng(responseMap["destinationLatitude"], responseMap["destinationLongitude"]),
-              setSourceAndDestinationIcons(),
-              _createPolylines(SOURCE_LOCATION.latitude, SOURCE_LOCATION.longitude,
-                  DRIVER_LOCATION.latitude, DRIVER_LOCATION.longitude),
+               setSourceAndDestinationIcons(),
+      if(responseMap['status']=='Booked'){
+        _createPolylines(DRIVER_LOCATION.latitude, DRIVER_LOCATION.longitude,
+            SOURCE_LOCATION.latitude, SOURCE_LOCATION.longitude),
+      }else{
+        _createPolylines(SOURCE_LOCATION.latitude, SOURCE_LOCATION.longitude,
+            DEST_LOCATION.latitude, DEST_LOCATION.longitude),
+      }
             });
 
     // for now it's on driver side so driver location is source
@@ -246,7 +253,7 @@ class _ShowNormalUserMapState extends State<ShowNormalUserMap> {
                           gradient: LinearGradient(colors: [Color(0x99000000), Color(0xFF000000)]),
                           borderRadius: BorderRadius.all(Radius.circular(20)),
                         ),
-                        height: 200,
+                        height: 150,
                         width: MediaQuery.of(context).size.width,
                         child: _showTripDetails(),
                       ),
@@ -271,16 +278,19 @@ class _ShowNormalUserMapState extends State<ShowNormalUserMap> {
   void setMapPins() {
     _markers = {};
     setState(() {
-      _markers.add(
-          Marker(markerId: MarkerId("sourcePin"), position: SOURCE_LOCATION, icon: sourceIcon));
-      // destination pin
-      if (responseMap['status'] == 'Booked')
+      if(responseMap['status']=='Booked'){
         _markers.add(
-            Marker(markerId: MarkerId("driverPin"), position: DRIVER_LOCATION, icon: driverIcon));
+            Marker(markerId: MarkerId("sourcePin"), position: DRIVER_LOCATION, icon: sourceIcon));
+        _markers.add(
+            Marker(markerId: MarkerId("destPin"), position: SOURCE_LOCATION, icon: destinationIcon));
+      }else{
+        _markers.add(
+            Marker(markerId: MarkerId("sourcePin"), position: SOURCE_LOCATION, icon: sourceIcon));
+        _markers.add(
+            Marker(markerId: MarkerId("destPin"), position: DEST_LOCATION, icon: destinationIcon));
+      }
 
-      if (responseMap['status'] == 'Riding')
-        _markers.add(Marker(
-            markerId: MarkerId("driverPin"), position: DEST_LOCATION, icon: destinationIcon));
+      // destination pin
     });
   }
 
@@ -312,54 +322,60 @@ class _ShowNormalUserMapState extends State<ShowNormalUserMap> {
                     Container(
                       child: Text(
                         "OTP",
-                        style: TextStyle(
-                            fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                        style: GoogleFonts.workSans(
+                            fontSize: 20, color: Colors.white),
                       ),
                     ),
                     Container(
-                      height: 50,
-                      child: ListView.builder(
-                        itemBuilder: (BuildContext context, int pos) {
-                          return Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Container(
-                              height: 40,
-                              width: 40,
-                              decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                  border: Border.all(color: Colors.grey)),
-                              child: Center(
-                                  child: Text(
-                                responseMap['otp'].toString().characters.elementAt(pos),
-                                style: TextStyle(
-                                    fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                              )),
-                            ),
-                          );
-                        },
-                        scrollDirection: Axis.horizontal,
-                        // physics: NeverScrollableScrollPhysics(),
-                        shrinkWrap: true,
-                        itemCount: 4,
+                      child: Text(
+                        responseMap['otp'].toString(),
+                        style: GoogleFonts.workSans(
+                            fontSize: 20, color: Colors.white),
                       ),
                     ),
+                    // Container(
+                    //   height: 50,
+                    //   child: ListView.builder(
+                    //     itemBuilder: (BuildContext context, int pos) {
+                    //       return Padding(
+                    //         padding: const EdgeInsets.all(8.0),
+                    //         child: Container(
+                    //           height: 40,
+                    //           width: 40,
+                    //           decoration: BoxDecoration(
+                    //               borderRadius: BorderRadius.circular(10.0),
+                    //               border: Border.all(color: Colors.grey)),
+                    //           child: Center(
+                    //               child: Text(
+                    //             responseMap['otp'].toString().characters.elementAt(pos),
+                    //             style: GoogleFonts.workSans(
+                    //                 fontSize: 20, fontWeight: FontWeight.w500, color: Colors.white),
+                    //           )),
+                    //         ),
+                    //       );
+                    //     },
+                    //     scrollDirection: Axis.horizontal,
+                    //     // physics: NeverScrollableScrollPhysics(),
+                    //     shrinkWrap: true,
+                    //     itemCount: 4,
+                    //   ),
+                    // ),
                   ],
                 )
-              : Container(),
-          Row(
+              : Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
                 child: Text(
                   "Amount to be paid",
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: GoogleFonts.workSans(fontSize: 17, color: Colors.white),
                 ),
               ),
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 10.0),
                 child: Text(
                   responseMap['cost'].toString() + " ₹",
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: GoogleFonts.workSans(fontSize: 17, fontWeight: FontWeight.w500, color: Colors.white),
                 ),
               ),
             ],
@@ -373,7 +389,7 @@ class _ShowNormalUserMapState extends State<ShowNormalUserMap> {
             selectedColor: Colors.black,
             unselectedColor: Colors.grey[200],
             customStep: (index, color, _) => Container(
-              color: status.indexOf(responseMap['status']) >= index ? Colors.black : Colors.white,
+              color: status.indexOf(responseMap['status']) >= index ? Colors.black : Colors.black,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -382,7 +398,7 @@ class _ShowNormalUserMapState extends State<ShowNormalUserMap> {
                     status.indexOf(responseMap['status']) >= index ? Icons.check : Icons.remove,
                     color: status.indexOf(responseMap['status']) >= index
                         ? Colors.white
-                        : Colors.black,
+                        : Colors.white,
                   ),
                   SizedBox(
                     height: 5,
@@ -391,7 +407,7 @@ class _ShowNormalUserMapState extends State<ShowNormalUserMap> {
                     status[index],
                     style: status.indexOf(responseMap['status']) >= index
                         ? GoogleFonts.workSans(color: Colors.white)
-                        : GoogleFonts.workSans(color: Colors.black),
+                        : GoogleFonts.workSans(color: Colors.white),
                   )
                 ],
               ),
