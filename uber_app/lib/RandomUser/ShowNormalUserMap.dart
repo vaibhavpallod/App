@@ -142,7 +142,7 @@ class _ShowNormalUserMapState extends State<ShowNormalUserMap> {
       color: Colors.black,
       points: polylineCoordinates,
       width: 4,
-      jointType: JointType.mitered,
+      // jointType: JointType.mitered,
       endCap: Cap.squareCap,
       startCap: Cap.buttCap,
     );
