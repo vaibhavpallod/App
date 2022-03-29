@@ -30,15 +30,49 @@ class MyUserApp extends StatelessWidget {
 
 class GeneralUserApp extends StatelessWidget {
   // Create the initialization Future outside of `build`:
+  Future initialise(BuildContext context) async {
+    print('initializing');
+    await Firebase.initializeApp();
+    // CollectionReference userCol =
+    //     FirebaseFirestore.instance.collection('allusers');
+    DatabaseReference allUsersDatabaseReference = FirebaseDatabase.instance.ref().child('allusers');
+
+    return ShowNormalUserMap();
+
+  }
 
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Uber ',
-      theme: ThemeData(),
-      home: Scaffold(
-        body: ShowNormalUserMap(),
+    return Scaffold(
+      body: Center(
+        child: FutureBuilder(
+          // Initialize FlutterFire:
+          future: initialise(context),
+          builder: (context, snapshot) {
+            // Check for errors
+            SizeConfig().init(context);
+
+            // print('abcMain${snapshot.data}');
+            if (snapshot.hasError) {
+              return Text("Something Went Wrong", textDirection: TextDirection.ltr);
+            }
+
+            // Once complete, show your application
+            if (snapshot.connectionState == ConnectionState.done) {
+              if (snapshot.data != null)
+                print('dataaa');
+              else
+                print('nulllllll');
+
+              // Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (BuildContext context)=>snapshot.data), (route) => false);
+              return snapshot.data;
+            }
+
+            // Otherwise, show something whilst waiting for initialization to complete
+            return spinkit;
+          },
+        ),
       ),
     );
   }
