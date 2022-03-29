@@ -463,8 +463,8 @@ class _SignUpState extends State<SignUp> {
 
   List<DropdownMenuItem<String>> get dropdownItems {
     List<DropdownMenuItem<String>> menuItems = [
-      const DropdownMenuItem(child: Text("User"), value: "User"),
-      const DropdownMenuItem(child: Text("Driver"), value: "Driver"),
+      const DropdownMenuItem(child: Text("Bookie"), value: "User"),
+      const DropdownMenuItem(child: Text("Partner"), value: "Driver"),
       // DropdownMenuItem(child: Text("Brazil"),value: "Brazil"),
       // DropdownMenuItem(child: Text("England"),value: "England"),
     ];

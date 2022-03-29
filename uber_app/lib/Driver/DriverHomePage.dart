@@ -139,7 +139,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
     Map<String, dynamic> responseMap = json.decode(res.body)['location'];
     print(responseMap);
     SOURCE_LOCATION = LatLng(responseMap['driverLatitude'], responseMap['driverLongitude']);
-    if (status == 'booked') {
+    if (status == 'Booked') {
       DEST_LOCATION = LatLng(responseMap['sourceLatitude'], responseMap['sourceLongitude']);
     } else {
       DEST_LOCATION =
@@ -285,12 +285,18 @@ class _DriverHomePageState extends State<DriverHomePage> {
 
   getDriverLocation() async {
     location = await currentLocation.getLocation();
-    bool statusPresent = await storage.containsKey(key: 'status');
+    String uid=FirebaseAuth.instance.currentUser.uid;
+    DatabaseReference driverRef = FirebaseDatabase.instance.ref().child('drivers').child(uid);
+    DatabaseReference dr=driverRef.child('activeRide');
+    DataSnapshot ds=await dr.get();
+
+    bool statusPresent = ds.exists;
     print(statusPresent);
     if (!statusPresent)
       await getRequests();
     else {
-      status = await storage.read(key: 'status');
+      Map map=ds.value;
+      status = map['status'];
       print(status);
       await getLatLongfromRequestPool(status);
       print('hello');
@@ -349,7 +355,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
                 controller.setMapStyle(Utils.mapStyles);
                 _controller.complete(controller);
               },
-              polylines: status == 'booked' || status == 'Riding' ? Set<Polyline>.of(
+              polylines: status == 'Booked' || status == 'Riding' ? Set<Polyline>.of(
                   polylines.values) : {},
               zoomControlsEnabled: false,
               initialCameraPosition: status == 'Finding' ? CameraPosition(
@@ -762,7 +768,6 @@ class _DriverHomePageState extends State<DriverHomePage> {
           var res = await http.get(Uri.parse(
               "https://us-central1-uber-hacktag-group-booking.cloudfunctions.net/sendMail?dest=$email&uid=$requestKey&otp=$otp"));
           print(res.body);
-          await storage.write(key: 'status', value: 'booked');
           await getDriverLocation();
           setState(() {
             load = false;
