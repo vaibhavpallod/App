@@ -20,6 +20,7 @@ import 'package:slider_button/slider_button.dart';
 import 'package:uber_hacktag_group_booking/Driver/Requests.dart';
 import 'package:uber_hacktag_group_booking/konstants/loaders.dart';
 import 'dart:convert';
+import '../Enter/login.dart';
 import '../Utils.dart';
 import '../konstants/Constansts.dart';
 
@@ -230,7 +231,11 @@ class _DriverHomePageState extends State<DriverHomePage> {
 
     DatabaseReference allUserreference =
     FirebaseDatabase.instance.ref().child('allusers').child(request['uid']).child('rides');
-
+    if(status=='Riding'){
+      int timeAdd=((Geolocator.distanceBetween( request['sourceLatitude'], request['sourceLongitude'],request['destinationLatitude'], request['destinationLongitude']) /
+          1000)*1.5).ceil();
+      temprequest['eta']=DateTime.now().add(Duration(minutes: timeAdd)).millisecondsSinceEpoch;
+    }
     setState(() {
       load = true;
     });
@@ -689,20 +694,14 @@ class _DriverHomePageState extends State<DriverHomePage> {
                 actions: <Widget>[
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: FlutterSwitch(
-                      height: 30.0,
-                      width: 45.0,
-                      // padding: 4.0,
-                      toggleSize: 20.0,
-                      borderRadius: 20.0,
-                      activeColor: Colors.black87,
-                      value: _switchValue,
-                      onToggle: (value) {
-                        setState(() {
-                          _switchValue = value;
-                        });
-                      },
-                    ),
+                    child: IconButton(icon:Icon(Icons.exit_to_app),color: Colors.black,onPressed: ()async{
+                      await storage.deleteAll();
+                      Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                              builder: (BuildContext context) => Login()),
+                              (route) => false);
+                    },)
                   ),
                 ],
               ),
@@ -755,6 +754,10 @@ class _DriverHomePageState extends State<DriverHomePage> {
     setState(() {
       load = true;
     });
+    int timeAdd=((Geolocator.distanceBetween(
+        location.latitude, location.longitude, temprequest['sourceLatitude'], temprequest['sourceLongitude']) /
+        1000)*1.5).ceil();
+    temprequest['eta']=DateTime.now().add(Duration(minutes: timeAdd)).millisecondsSinceEpoch;
     databaseReference.child('requestPool').child(requestKey).set(temprequest).whenComplete(() =>
     {
       allUserreference

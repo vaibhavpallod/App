@@ -139,8 +139,6 @@ class _BookingFormState extends State<BookingForm> {
       allowedExtensions: ['csv', 'xlsx'],
     );
     File file = File(result.files.single.path);
-    var encryptedBase64EncodedString = await file.readAsString(encoding: utf8);
-    print(encryptedBase64EncodedString);
     // final input = file.openRead();
     // final fields = await input.transform(Utf8Decoder()).transform(new CsvToListConverter()).toList();
     // print(fields);
@@ -371,6 +369,7 @@ class _BookingFormState extends State<BookingForm> {
                                         //
                                         // },
                                         onTap: () async {
+                                          Navigator.pop(context);
                                           setState(() {
                                             load = true;
                                           });

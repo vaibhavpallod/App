@@ -69,7 +69,7 @@ class _ShowStatusState extends State<ShowStatus> {
                   children: [
                     Text("Status:- ${data[pos]['status']}",style: GoogleFonts.workSans(fontSize: 15,fontWeight: FontWeight.normal),maxLines: 1,overflow: TextOverflow.ellipsis,),
                     Spacer(),
-                    status.indexOf(data[pos]['status'])>=0?GestureDetector(child: Text('Track',style: GoogleFonts.workSans(fontSize: 15,fontWeight: FontWeight.normal,color: Colors.blue),),onTap: (){
+                    status.indexOf(data[pos]['status'])>=1?GestureDetector(child: Text('Track',style: GoogleFonts.workSans(fontSize: 15,fontWeight: FontWeight.normal,color: Colors.blue),),onTap: (){
                       Navigator.push(context, MaterialPageRoute(builder: (BuildContext context)=>StatusIndividualScreen(data: data[pos],id: id[pos],)));
                     },):Container(),
                     SizedBox(width: 10,)
@@ -82,7 +82,7 @@ class _ShowStatusState extends State<ShowStatus> {
                     selectedSize: 60,
                     unselectedSize: 60,
                     totalSteps: 4,
-                    currentStep: 1,
+                    currentStep: status.indexOf(data[pos]['status'])+1,
                     size: 36,
                     selectedColor: Colors.black,
                     unselectedColor: Colors.grey[200],
