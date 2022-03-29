@@ -31,7 +31,8 @@ class DriverHomePage extends StatefulWidget {
 class _DriverHomePageState extends State<DriverHomePage> {
   Completer<GoogleMapController> _controller = Completer();
   Location currentLocation = Location();
-  Set<Marker> _markers = {}, _currentMarker;
+  Set<Marker> _markers = {},
+      _currentMarker;
   bool load = true;
   BitmapDescriptor sourceIcon;
   BitmapDescriptor destinationIcon;
@@ -39,7 +40,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
   List<LatLng> polylineCoordinates = [];
   Map<PolylineId, Polyline> polylines = {};
   LocationData location;
-  String status='Finding';
+  String status = 'Finding';
   String finalCode;
 
   var storage = FlutterSecureStorage();
@@ -62,67 +63,72 @@ class _DriverHomePageState extends State<DriverHomePage> {
     // serCustomMarker();
   }
 
-   getRequests() {
+  getRequests() {
     final database = FirebaseDatabase.instance;
     Map<dynamic, dynamic> tempMap = Map();
     double dist;
     databaseReference
         .child('requestPool')
         .get()
-        .then((value) => {
-              print("Requests" + value.value.toString()),
-              tempMap.addAll(value.value),
-              tempMap.keys.forEach((element) {
-                listOFKeys.add(element);
-              }),
+        .then((value) =>
+    {
+      print("Requests" + value.value.toString()),
+      tempMap.addAll(value.value),
+      tempMap.keys.forEach((element) {
+        listOFKeys.add(element);
+      }),
 
-              tempMap.values.forEach((element) {
-                print(element.toString());
+      tempMap.values.forEach((element) {
+        print(element.toString());
 
-                double destinationLatitude = element['sourceLatitude'];
-                double destinationLongitude = element['sourceLongitude'];
-                // double driverLat = element['driverLatitude'];
-                // double driverLng = element['driverLongitude'];
-                double distanceInMeters = Geolocator.distanceBetween(
-                    location.latitude, location.longitude, destinationLatitude, destinationLongitude);
-                // element['distance'] = distanceInMeters;
-                // var dist = (distanceInMeters / 1000);
-                var currentTime = DateTime.now().millisecondsSinceEpoch;
-                print("print: " +
-                    (currentTime)
-                        .toString()); // Validation for requests based on TIme, distance & Status
-                print("print: " +
-                    (distanceInMeters)
-                        .toString()); // Validation for requests based on TIme, distance & Status
-                if(element['status']=="Finding" && currentTime >= element['scheduleTime'] && distanceInMeters <=10000) {
-                  setState(() {
-                    listOFRequests.add(element as Map);
-                  });
-                }
-              }),
-              print("print"+listOFRequests.toString()),
-              tempMap.forEach((key, value) {
-                if(!listOFRequests.contains(value)){
-                  print("print"+key);
-                  listOFKeys.remove(key);
-                }
-              })
+        double destinationLatitude = element['sourceLatitude'];
+        double destinationLongitude = element['sourceLongitude'];
+        // double driverLat = element['driverLatitude'];
+        // double driverLng = element['driverLongitude'];
+        double distanceInMeters = Geolocator.distanceBetween(
+            location.latitude, location.longitude, destinationLatitude, destinationLongitude);
+        // element['distance'] = distanceInMeters;
+        // var dist = (distanceInMeters / 1000);
+        var currentTime = DateTime
+            .now()
+            .millisecondsSinceEpoch;
+        print("print: " +
+            (currentTime)
+                .toString()); // Validation for requests based on TIme, distance & Status
+        print("print: " +
+            (distanceInMeters)
+                .toString()); // Validation for requests based on TIme, distance & Status
+        if (element['status'] == "Finding" && currentTime >= element['scheduleTime'] &&
+            distanceInMeters <= 10000) {
+          setState(() {
+            listOFRequests.add(element as Map);
+          });
+        }
+      }),
+      print("print" + listOFRequests.toString()),
+      tempMap.forEach((key, value) {
+        if (!listOFRequests.contains(value)) {
+          print("print" + key);
+          listOFKeys.remove(key);
+        }
+      })
 
-              // value.fo
-            })
-        .whenComplete(() => {
-              listOFRequests.forEach((element) {
-                print("Requests Map: " + element.toString());
-              }),
-              serCustomMarker(),
-            });
+      // value.fo
+    })
+        .whenComplete(() =>
+    {
+      listOFRequests.forEach((element) {
+        print("Requests Map: " + element.toString());
+      }),
+      serCustomMarker(),
+    });
   }
 
   Future<void> getLatLongfromRequestPool(String status) async {
-    String uid=FirebaseAuth.instance.currentUser.uid;
-    DatabaseReference driverRef=FirebaseDatabase.instance.ref().child('drivers').child(uid);
-    DataSnapshot ds=await driverRef.child('activeRide').get();
-    Map map=ds.value;
+    String uid = FirebaseAuth.instance.currentUser.uid;
+    DatabaseReference driverRef = FirebaseDatabase.instance.ref().child('drivers').child(uid);
+    DataSnapshot ds = await driverRef.child('activeRide').get();
+    Map map = ds.value;
     print(map);
     var res = await http.get(
         Uri.parse("https://uber-hacktag76.herokuapp.com/getLoc/"),
@@ -133,10 +139,11 @@ class _DriverHomePageState extends State<DriverHomePage> {
     Map<String, dynamic> responseMap = json.decode(res.body)['location'];
     print(responseMap);
     SOURCE_LOCATION = LatLng(responseMap['driverLatitude'], responseMap['driverLongitude']);
-    if(status=='booked') {
+    if (status == 'booked') {
       DEST_LOCATION = LatLng(responseMap['sourceLatitude'], responseMap['sourceLongitude']);
-    }else{
-      DEST_LOCATION = LatLng(responseMap['destinationLatitude'], responseMap['destinationLatitude']);
+    } else {
+      DEST_LOCATION =
+          LatLng(responseMap['destinationLatitude'], responseMap['destinationLatitude']);
     }
     print('wtf bro');
     print(SOURCE_LOCATION);
@@ -160,12 +167,10 @@ class _DriverHomePageState extends State<DriverHomePage> {
         DEST_LOCATION.latitude, DEST_LOCATION.longitude);
   }
 
-  _createPolylines(
-      double startLatitude,
+  _createPolylines(double startLatitude,
       double startLongitude,
       double destinationLatitude,
-      double destinationLongitude,
-      ) async {
+      double destinationLongitude,) async {
     polylinePoints = PolylinePoints();
 
     // Generating the list of coordinates to be used for
@@ -211,16 +216,16 @@ class _DriverHomePageState extends State<DriverHomePage> {
     // print(polylines);
   }
 
-  changeStatus(String status)async{
-    String uid=FirebaseAuth.instance.currentUser.uid;
-    DatabaseReference driverRef=FirebaseDatabase.instance.ref().child('drivers').child(uid);
-    DataSnapshot ds=await driverRef.child('activeRide').get();
-    Map request=ds.value;
-    String requestKey=request['id'];
+  changeStatus(String status) async {
+    String uid = FirebaseAuth.instance.currentUser.uid;
+    DatabaseReference driverRef = FirebaseDatabase.instance.ref().child('drivers').child(uid);
+    DataSnapshot ds = await driverRef.child('activeRide').get();
+    Map request = ds.value;
+    String requestKey = request['id'];
     print(requestKey);
     print(request);
-    Map<String, dynamic> temprequest={
-      'status':status
+    Map<String, dynamic> temprequest = {
+      'status': status
     };
 
     DatabaseReference allUserreference =
@@ -229,23 +234,25 @@ class _DriverHomePageState extends State<DriverHomePage> {
     setState(() {
       load = true;
     });
-    databaseReference.child('requestPool').child(requestKey).update(temprequest).whenComplete(() => {
+    databaseReference.child('requestPool').child(requestKey).update(temprequest).whenComplete(() =>
+    {
       allUserreference
           .child(request['gloabalRequestID'])
           .child(requestKey)
           .update(temprequest)
-          .whenComplete(() => {
-        storage.write(key: 'status', value: status).whenComplete(()async{
-         if(status=='Riding') {
-           await driverRef.child('activeRide').update(temprequest);
-         }else{
-           await driverRef.child('activeRide').remove();
-           await storage.delete(key: 'status');
-         }
-         await getDriverLocation();
-         _showMessege('Accepted');
+          .whenComplete(() =>
+      {
+        storage.write(key: 'status', value: status).whenComplete(() async {
+          if (status == 'Riding') {
+            await driverRef.child('activeRide').update(temprequest);
+          } else {
+            await driverRef.child('activeRide').remove();
+            await storage.delete(key: 'status');
+          }
+          await getDriverLocation();
+          _showMessege('Accepted');
           setState(() {
-            load=false;
+            load = false;
           });
         })
       }),
@@ -253,15 +260,16 @@ class _DriverHomePageState extends State<DriverHomePage> {
   }
 
 
-   setSourceAndDestinationIcons() async {
+  setSourceAndDestinationIcons() async {
     sourceIcon = await BitmapDescriptor.fromAssetImage(
         ImageConfiguration(devicePixelRatio: 2.5), "images/sourcePin.png");
     destinationIcon = await BitmapDescriptor.fromAssetImage(
         ImageConfiguration(devicePixelRatio: 2.5), "images/destPin.png");
     setMapPins();
   }
+
   void setMapPins() {
-    _markers={};
+    _markers = {};
     setState(() {
       _markers.add(Marker(
           markerId: MarkerId("sourcePin"),
@@ -277,18 +285,18 @@ class _DriverHomePageState extends State<DriverHomePage> {
 
   getDriverLocation() async {
     location = await currentLocation.getLocation();
-    bool statusPresent=await storage.containsKey(key: 'status');
+    bool statusPresent = await storage.containsKey(key: 'status');
     print(statusPresent);
-    if(!statusPresent)
+    if (!statusPresent)
       await getRequests();
-    else{
-      status=await storage.read(key: 'status');
+    else {
+      status = await storage.read(key: 'status');
       print(status);
-        await getLatLongfromRequestPool(status);
-        print('hello');
-        setState(() {
-          load = false;
-        });
+      await getLatLongfromRequestPool(status);
+      print('hello');
+      setState(() {
+        load = false;
+      });
     }
     // setState(() {
     //   load = false;
@@ -309,14 +317,13 @@ class _DriverHomePageState extends State<DriverHomePage> {
   }
 
 
-  Future<bool> checkOTP()async{
-    String uid=FirebaseAuth.instance.currentUser.uid;
-    DatabaseReference driverRef=FirebaseDatabase.instance.ref().child('drivers').child(uid);
-    DataSnapshot ds=await driverRef.child('activeRide').get();
-    Map map=ds.value;
+  Future<bool> checkOTP() async {
+    String uid = FirebaseAuth.instance.currentUser.uid;
+    DatabaseReference driverRef = FirebaseDatabase.instance.ref().child('drivers').child(uid);
+    DataSnapshot ds = await driverRef.child('activeRide').get();
+    Map map = ds.value;
     print(map['otp']);
-    return map['otp']==int.parse(finalCode);
-
+    return map['otp'] == int.parse(finalCode);
   }
 
   @override
@@ -327,203 +334,196 @@ class _DriverHomePageState extends State<DriverHomePage> {
       body: load
           ? spinkit
           : Container(
-              height: MediaQuery.of(context).size.height,
-              width: MediaQuery.of(context).size.width,
-              child: Stack(
-                children: [
-                  GoogleMap(
-                    onMapCreated: (GoogleMapController controller) {
-                      controller.setMapStyle(Utils.mapStyles);
-                      _controller.complete(controller);
-                    },
-                    polylines: status=='booked'||status=='Riding'? Set<Polyline>.of(polylines.values):{},
-                    zoomControlsEnabled: false,
-                    initialCameraPosition: status=='Finding'?CameraPosition(
-                      target: LatLng(location.latitude ?? 0.0, location.longitude ?? 0.0),
-                      zoom: 12.0,
-                    ):CameraPosition(
-                        target: LatLng(SOURCE_LOCATION.latitude ?? 0.0,
-                            SOURCE_LOCATION.longitude ?? 0.0),
-                        zoom: 14.0,
-                        bearing: 30),
-                    markers: _markers,
+        height: MediaQuery
+            .of(context)
+            .size
+            .height,
+        width: MediaQuery
+            .of(context)
+            .size
+            .width,
+        child: Stack(
+          children: [
+            GoogleMap(
+              onMapCreated: (GoogleMapController controller) {
+                controller.setMapStyle(Utils.mapStyles);
+                _controller.complete(controller);
+              },
+              polylines: status == 'booked' || status == 'Riding' ? Set<Polyline>.of(
+                  polylines.values) : {},
+              zoomControlsEnabled: false,
+              initialCameraPosition: status == 'Finding' ? CameraPosition(
+                target: LatLng(location.latitude ?? 0.0, location.longitude ?? 0.0),
+                zoom: 12.0,
+              ) : CameraPosition(
+                  target: LatLng(SOURCE_LOCATION.latitude ?? 0.0,
+                      SOURCE_LOCATION.longitude ?? 0.0),
+                  zoom: 14.0,
+                  bearing: 30),
+              markers: _markers,
+            ),
+            status == 'Finding' ? Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(0, 0, 0, 50),
+                child: CarouselSlider.builder(
+                  options: CarouselOptions(
+                      height: 350,
+                      enlargeCenterPage: true,
+                      // height: 100.0,
+                      initialPage: 0,
+                      viewportFraction: 0.8,
+                      autoPlay: false,
+                      enableInfiniteScroll: false
                   ),
-                  status=='Finding'?Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(0, 0, 0, 50),
-                      child: CarouselSlider.builder(
-                        options: CarouselOptions(
-                          height: 350,
-                          enlargeCenterPage: true,
-                          // height: 100.0,
-                          initialPage: 0,
-                          viewportFraction: 0.8,
-                          autoPlay: false,
-                          enableInfiniteScroll: false
-                        ),
-                        itemCount: listOFRequests.length,
-                        itemBuilder: (context, itemIndex, realIndex) {
-                          print('itemIndex' + itemIndex.toString());
-                          return _requestCardUI(itemIndex);
-                        },
+                  itemCount: listOFRequests.length,
+                  itemBuilder: (context, itemIndex, realIndex) {
+                    print('itemIndex' + itemIndex.toString());
+                    return _requestCardUI(itemIndex);
+                  },
+                ),
+              ),
+            ) : status != 'Riding' ? Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 20, vertical: 8),
+                child: Material(
+                  elevation: 15,
+                  borderRadius: BorderRadius.all(Radius.circular(20)),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey, width: 1),
+                      gradient: LinearGradient(
+                          colors: [
+                            Color(0x99000000),
+                            Color(0xFF000000)
+                          ]
                       ),
+                      borderRadius: BorderRadius.all(Radius.circular(20)),
                     ),
-                  ):status!='Riding'?Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 8),
-                      child: Material(
-                        elevation: 15,
-                        borderRadius: BorderRadius.all(Radius.circular(20)),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey, width: 1),
-                            gradient: LinearGradient(
-                                colors: [
-                                  Color(0x99000000),
-                                  Color(0xFF000000)
-                                ]
-                            ),
-                            borderRadius: BorderRadius.all(Radius.circular(20)),
-                          ),
-                          height: 180,
-                          width: MediaQuery
-                              .of(context)
-                              .size
-                              .width,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                child: Center(
-                                  child: Text('Enter OTP',
-                                    textAlign: TextAlign.center,
-                                    style: GoogleFonts.workSans(
-                                        color: Colors.white, fontSize: 18),),
-                                ),
-                              ),
-                              SizedBox(height: 5,),
-                              Container(
-                                child: OtpTextField(
-                                  textStyle: GoogleFonts.workSans(fontSize: 15,color: Colors.white),
-                                  numberOfFields: 4,
-                                  borderColor: Colors.grey,
-                                  focusedBorderColor: Colors.grey,
-                                  cursorColor: Colors.white,
-                                  showFieldAsBox: true,
-                                  fieldWidth: MediaQuery.of(context).size.width / 10,
-                                  borderWidth: 2.0,
-                                  //runs when a code is typed in
-                                  onSubmit: (String code) {
-                                    //handle validation or checks here if necessary
-                                    print(code);
-                                    setState(() {
-                                      finalCode = code;
-                                    });
-                                  },
-                                ),
-                              ),
-                              // Expanded(
-                              //   child: Container(
-                              //     decoration: BoxDecoration(
-                              //       gradient: LinearGradient(
-                              //         begin: Alignment.topCenter,
-                              //         end: Alignment.bottomCenter,
-                              //         stops: [
-                              //           0,0.5,1
-                              //         ],
-                              //         colors: [
-                              //           Colors.redAccent.shade100,
-                              //           Colors.redAccent,
-                              //           Colors.redAccent.shade100,
-                              //         ]
-                              //       )
-                              //     ),
-                              //   ),
-                              // )
-                              SizedBox(height: 5,),
-                              Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: SliderButton(
-                                    action: ()async{
-                                      if(finalCode==null||finalCode.length<4){
-                                        Fluttertoast.showToast(msg: 'Enter correct OTP');
-                                      }
-                                      else {
-                                        setState(() {
-                                          load = true;
-                                        });
-                                        bool otpCorrect = await checkOTP();
-                                        if(otpCorrect){
-                                          await changeStatus('Riding');
-                                        }else{
-                                          _showMessege('Please enter correct OTP');
-                                          setState(() {
-                                            load=false;
-                                          });
-                                        }
-                                      }
-                                    },
-                                    icon: Center(
-                                      child: Icon(
-                                        Icons.local_taxi,
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                    label: Text(
-                                      "Slide to Start",
-                                      style: GoogleFonts.workSans(color: Colors.white,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w400),
-                                    ),
-                                  ),
-                                ),
-                              )
-                            ],
+                    height: 180,
+                    width: MediaQuery
+                        .of(context)
+                        .size
+                        .width,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: Center(
+                            child: Text('Enter OTP',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.workSans(
+                                  color: Colors.white, fontSize: 18),),
                           ),
                         ),
-                      ),
-                    ),
-                  ):Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 8),
-                      child: Material(
-                        color: Colors.black,
-                        elevation: 15,
-                        borderRadius: BorderRadius.all(Radius.circular(20)),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: SliderButton(
-                            action: ()async{
-                              await changeStatus('Completed');
+                        SizedBox(height: 5,),
+                        Container(
+                          child: OtpTextField(
+                            textStyle: GoogleFonts.workSans(fontSize: 15, color: Colors.white),
+                            numberOfFields: 4,
+                            borderColor: Colors.grey,
+                            focusedBorderColor: Colors.grey,
+                            cursorColor: Colors.white,
+                            showFieldAsBox: true,
+                            fieldWidth: MediaQuery
+                                .of(context)
+                                .size
+                                .width / 10,
+                            borderWidth: 2.0,
+                            //runs when a code is typed in
+                            onSubmit: (String code) {
+                              //handle validation or checks here if necessary
+                              print(code);
+                              setState(() {
+                                finalCode = code;
+                              });
                             },
-                            icon: Center(
-                              child: Icon(
-                                Icons.local_taxi,
-                                color: Colors.black,
-                              ),
-                            ),
-                            label: Text(
-                              "Slide to Complete",
-                              style: GoogleFonts.workSans(color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w400),
-                            ),
                           ),
                         ),
+
+                        SizedBox(height: 5,),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: SliderButton(
+                              action: () async {
+                                if (finalCode == null || finalCode.length < 4) {
+                                  Fluttertoast.showToast(msg: 'Enter correct OTP');
+                                }
+                                else {
+                                  setState(() {
+                                    load = true;
+                                  });
+                                  bool otpCorrect = await checkOTP();
+                                  if (otpCorrect) {
+                                    await changeStatus('Riding');
+                                  } else {
+                                    _showMessege('Please enter correct OTP');
+                                    setState(() {
+                                      load = false;
+                                    });
+                                  }
+                                }
+                              },
+                              icon: Center(
+                                child: Icon(
+                                  Icons.local_taxi,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              label: Text(
+                                "Slide to Start",
+                                style: GoogleFonts.workSans(color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w400),
+                              ),
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ) : Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 20, vertical: 8),
+                child: Material(
+                  color: Colors.black,
+                  elevation: 15,
+                  borderRadius: BorderRadius.all(Radius.circular(20)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: SliderButton(
+                      action: () async {
+                        await changeStatus('Completed');
+                      },
+                      icon: Center(
+                        child: Icon(
+                          Icons.local_taxi,
+                          color: Colors.black,
+                        ),
+                      ),
+                      label: Text(
+                        "Slide to Complete",
+                        style: GoogleFonts.workSans(color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400),
                       ),
                     ),
                   ),
-                ],
+                ),
               ),
             ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -628,7 +628,8 @@ class _DriverHomePageState extends State<DriverHomePage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (BuildContext context) => Requests(
+                          builder: (BuildContext context) =>
+                              Requests(
                                 location: location,
                               )),
                     );
@@ -651,8 +652,12 @@ class _DriverHomePageState extends State<DriverHomePage> {
     );
   }
 
-  _appBar(height) => PreferredSize(
-        preferredSize: Size(MediaQuery.of(context).size.width, height + 80),
+  _appBar(height) =>
+      PreferredSize(
+        preferredSize: Size(MediaQuery
+            .of(context)
+            .size
+            .width, height + 80),
         child: Stack(
           children: <Widget>[
             Positioned(
@@ -717,51 +722,10 @@ class _DriverHomePageState extends State<DriverHomePage> {
     setState(() {
       load = false;
     });
-    // setState(() {
-    //   _markers.add(Marker(
-    //       icon: mapMarker,
-    //       markerId: MarkerId('id-1'),
-    //       position: LatLng(18.602464, 73.781616),
-    //       infoWindow: InfoWindow(
-    //         title: 'Rahatani',
-    //       )));
-    //   _markers.add(Marker(
-    //       icon: mapMarker,
-    //       markerId: MarkerId('id-2'),
-    //       position: LatLng(18.590014, 73.747523),
-    //       infoWindow: InfoWindow(
-    //         title: 'Rahatani',
-    //       )));
-    //
-    //   _markers.add(Marker(
-    //       icon: mapMarker,
-    //       markerId: MarkerId('id-3'),
-    //       position: LatLng(18.644837, 73.769367),
-    //       infoWindow: InfoWindow(
-    //         title: 'Nigdi',
-    //       )));
-    //
-    //   _markers.add(Marker(
-    //       icon: mapMarker,
-    //       markerId: MarkerId('id-4'),
-    //       position: LatLng(18.638168, 73.791211),
-    //       infoWindow: InfoWindow(
-    //         title: 'Rahatani',
-    //       )));
-    //
-    //   _markers.add(Marker(
-    //       icon: mapMarker,
-    //       markerId: MarkerId('id-5'),
-    //       position: LatLng(18.636867, 73.768552),
-    //       infoWindow: InfoWindow(
-    //         title: 'Railway Station',
-    //       )));
-    //   // 18.644837, 73.769367
-    // });
   }
 
 
-  int generateOTP(){
+  int generateOTP() {
     var rng = new Random();
     var rand = rng.nextInt(9000) + 1000;
     return (rand.toInt());
@@ -771,38 +735,41 @@ class _DriverHomePageState extends State<DriverHomePage> {
     Map<dynamic, dynamic> temprequest = request;
 
     DatabaseReference allUserreference =
-        FirebaseDatabase.instance.ref().child('allusers').child(request['uid']).child('rides');
-    String uid=FirebaseAuth.instance.currentUser.uid;
-    DatabaseReference driverRef=FirebaseDatabase.instance.ref().child('drivers').child(uid);
+    FirebaseDatabase.instance.ref().child('allusers').child(request['uid']).child('rides');
+    String uid = FirebaseAuth.instance.currentUser.uid;
+    DatabaseReference driverRef = FirebaseDatabase.instance.ref().child('drivers').child(uid);
 
     String requestKey = listOFKeys[index];
     temprequest['status'] = 'Booked';
     temprequest['driverLatitude'] = location.latitude;
     temprequest['driverLongitude'] = location.longitude;
-    temprequest['otp'] = generateOTP();
+    int otp = generateOTP();
+    temprequest['otp'] = otp;
     var email = request['passengerEmail'];
     setState(() {
       load = true;
     });
-    databaseReference.child('requestPool').child(requestKey).set(temprequest).whenComplete(() => {
-          allUserreference
-              .child(temprequest['gloabalRequestID'])
-              .child(requestKey)
-              .set(temprequest)
-              .whenComplete(() =>{
-                temprequest['id']=requestKey,
-                driverRef.child('activeRide').set(temprequest).whenComplete(()async{
-                  var res = await http.get(Uri.parse(
-                      "https://us-central1-uber-hacktag-group-booking.cloudfunctions.net/sendMail?dest=$email&uid=$requestKey"));
-                  print(res.body);
-                  await storage.write(key: 'status', value: 'booked');
-                  await getDriverLocation();
-                  setState(() {
-                    load=false;
-                  });
-                })
-                  }),
-        });
+    databaseReference.child('requestPool').child(requestKey).set(temprequest).whenComplete(() =>
+    {
+      allUserreference
+          .child(temprequest['gloabalRequestID'])
+          .child(requestKey)
+          .set(temprequest)
+          .whenComplete(() =>
+      {
+        temprequest['id'] = requestKey,
+        driverRef.child('activeRide').set(temprequest).whenComplete(() async {
+          var res = await http.get(Uri.parse(
+              "https://us-central1-uber-hacktag-group-booking.cloudfunctions.net/sendMail?dest=$email&uid=$requestKey&otp=$otp"));
+          print(res.body);
+          await storage.write(key: 'status', value: 'booked');
+          await getDriverLocation();
+          setState(() {
+            load = false;
+          });
+        })
+      }),
+    });
   }
 
   _showMessege(String msg) {
@@ -811,7 +778,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
 
   Future<void> _goToTheLake(Map<dynamic, dynamic> tempMap) async {
     CameraPosition _kLake = CameraPosition(
-        // bearing: 192.8334901395799,
+      // bearing: 192.8334901395799,
         target: LatLng(tempMap['sourceLatitude'], tempMap['sourceLongitude']),
         // tilt: 59.440717697143555,
         zoom: 12);
