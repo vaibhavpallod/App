@@ -784,9 +784,6 @@ class _DriverHomePageState extends State<DriverHomePage> {
     setState(() {
       load = true;
     });
-    var res = await http.get(Uri.parse(
-        "https://us-central1-uber-hacktag-group-booking.cloudfunctions.net/sendMail?dest=$email&uid=$requestKey"));
-    print(res.body);
     databaseReference.child('requestPool').child(requestKey).set(temprequest).whenComplete(() => {
           allUserreference
               .child(temprequest['gloabalRequestID'])
@@ -795,6 +792,9 @@ class _DriverHomePageState extends State<DriverHomePage> {
               .whenComplete(() =>{
                 temprequest['id']=requestKey,
                 driverRef.child('activeRide').set(temprequest).whenComplete(()async{
+                  var res = await http.get(Uri.parse(
+                      "https://us-central1-uber-hacktag-group-booking.cloudfunctions.net/sendMail?dest=$email&uid=$requestKey"));
+                  print(res.body);
                   await storage.write(key: 'status', value: 'booked');
                   await getDriverLocation();
                   setState(() {
