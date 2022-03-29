@@ -76,33 +76,33 @@ class _ShowStatusState extends State<ShowStatus> {
                   ],
                 ),
                 SizedBox(height: 10,),
-                // Padding(
-                //   padding: const EdgeInsets.symmetric(horizontal: 12,vertical: 8),
-                //   child: StepProgressIndicator(
-                //     selectedSize: 60,
-                //     unselectedSize: 60,
-                //     totalSteps: 4,
-                //     currentStep: 1,
-                //     size: 36,
-                //     selectedColor: Colors.black,
-                //     unselectedColor: Colors.grey[200],
-                //     customStep: (index, color, _) => Container(
-                //       color: color,
-                //       child: Column(
-                //         mainAxisAlignment: MainAxisAlignment.center,
-                //         crossAxisAlignment: CrossAxisAlignment.center,
-                //         children: [
-                //           Icon(
-                //             status.indexOf(data[pos]['status'])>=index?Icons.check:Icons.remove,
-                //             color: status.indexOf(data[pos]['status'])>=index?Colors.white:Colors.black,
-                //           ),
-                //           SizedBox(height: 5,),
-                //           Text(status[index],style: status.indexOf(data[pos]['status'])>=index?GoogleFonts.workSans(color: Colors.white):GoogleFonts.workSans(color: Colors.black),)
-                //         ],
-                //       ),
-                //     )
-                //   ),
-                // ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12,vertical: 8),
+                  child: StepProgressIndicator(
+                    selectedSize: 60,
+                    unselectedSize: 60,
+                    totalSteps: 4,
+                    currentStep: 1,
+                    size: 36,
+                    selectedColor: Colors.black,
+                    unselectedColor: Colors.grey[200],
+                    customStep: (index, color, _) => Container(
+                      color: color,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(
+                            status.indexOf(data[pos]['status'])>=index?Icons.check:Icons.remove,
+                            color: status.indexOf(data[pos]['status'])>=index?Colors.white:Colors.black,
+                          ),
+                          SizedBox(height: 5,),
+                          Text(status[index],style: status.indexOf(data[pos]['status'])>=index?GoogleFonts.workSans(color: Colors.white):GoogleFonts.workSans(color: Colors.black),)
+                        ],
+                      ),
+                    )
+                  ),
+                ),
               ],
             ),
           ),

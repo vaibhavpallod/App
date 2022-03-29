@@ -1,11 +1,14 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:step_progress_indicator/step_progress_indicator.dart';
 
 import '../Utils.dart';
 import '../konstants/Constansts.dart';
@@ -21,7 +24,6 @@ class ShowNormalUserMap extends StatefulWidget {
 class _ShowNormalUserMapState extends State<ShowNormalUserMap> {
   final storage = FlutterSecureStorage();
   BitmapDescriptor sourceIcon, destinationIcon, driverIcon;
-  PolylinePoints polylinePoints;
   Completer<GoogleMapController> _controller = Completer();
   Set<Marker> _markers = {};
 
@@ -29,10 +31,25 @@ class _ShowNormalUserMapState extends State<ShowNormalUserMap> {
   Map<dynamic, dynamic> responseMap;
   Map<PolylineId, Polyline> polylines = {};
   LatLng DEST_LOCATION, SOURCE_LOCATION, DRIVER_LOCATION;
-  String id;
+  String id = "a0926880-aea1-11ec-984c-4545ffd26017";
   bool load = true;
   List<LatLng> polylineCoordinates = [];
   DatabaseReference databaseReference = FirebaseDatabase.instance.ref().child('requestPool');
+
+  List<String> notKey = [
+    'dateTime',
+    'destination',
+    'dateTime',
+    'destinationLatitude',
+    'destinationLongitude',
+    'numberOfCabs',
+    'source',
+    'sourceLatitude',
+    'sourceLongitude'
+  ];
+  Map data;
+  List<String> ids;
+  List<String> status = ['Finding', 'Booked', 'Riding', 'Completed'];
 
   @override
   void initState() {
@@ -47,27 +64,54 @@ class _ShowNormalUserMapState extends State<ShowNormalUserMap> {
   void getLocation() async {
     var pinLocationIcon = await BitmapDescriptor.fromAssetImage(
         ImageConfiguration(devicePixelRatio: 2.5, size: Size.fromHeight(12)), 'images/pin.png');
-
+    setLisner();
     // addMarker(location, pinLocationIcon);
+  }
+
+  setLisner() {
+    databaseReference.child(id).onChildChanged.listen((event) {
+      print("from SHOWMAP printing DART " +
+          event.snapshot.key +
+          " " +
+          event.snapshot.value.toString());
+
+      if (event.snapshot.key == 'status') {
+        setState(() {
+          load = true;
+        });
+        responseMap['status'] = event.snapshot.value.toString();
+        if (responseMap['status'] == 'Riding') {
+          setSourceAndDestinationIcons();
+
+          _createPolylines(SOURCE_LOCATION.latitude, SOURCE_LOCATION.longitude,
+              DEST_LOCATION.latitude, DEST_LOCATION.longitude);
+        } else if (responseMap['status'] == 'Booked') {
+          setSourceAndDestinationIcons();
+          _createPolylines(SOURCE_LOCATION.latitude, SOURCE_LOCATION.longitude,
+              DRIVER_LOCATION.latitude, DRIVER_LOCATION.longitude);
+        }
+      }
+    });
   }
 
   Future<void> _getDataFromAdnroid() async {
     print("calling for data");
 
-    String data;
-    try {
-      final String result =
-          await platform.invokeMethod('test', {"data": ""}); //sending data from flutter here
-      data = result;
-      var idx = data.lastIndexOf('https://uber-hack12.herokuapp.com/');
-      var rideId = data.substring(34);
-      print(idx.toString() + " ID from SHOWMAP printing DART " + rideId);
-      print("from SHOWMAP printing DART" + data);
-      id = rideId;
-    } on PlatformException catch (e) {
-      data = "Android is not responding please check the code";
-      print("from SHOWMAP printing DART" + data);
-    }
+    // String data;
+    // try {
+    //   final String result =
+    //       await platform.invokeMethod('test', {"data": ""}); //sending data from flutter here
+    //   data = result;
+    //   var idx = data.lastIndexOf('https://uber-hack12.herokuapp.com/');
+    //   var rideId = data.substring(34);
+    //   print(idx.toString() + " ID from SHOWMAP printing DART " + rideId);
+    //   print("from SHOWMAP printing DART" + data);
+    //   id = rideId;
+    //   // id="a0926880-aea1-11ec-984c-4545ffd26017";
+    // } on PlatformException catch (e) {
+    //   data = "Android is not responding please check the code";
+    //   print("from SHOWMAP printing DART" + data);
+    // }
     getLatLongfromRequestPool();
     // setState(() {
     //   load=false;
@@ -92,8 +136,8 @@ class _ShowNormalUserMapState extends State<ShowNormalUserMap> {
                   LatLng(responseMap["driverLatitude"], responseMap["driverLongitude"]),
               SOURCE_LOCATION =
                   LatLng(responseMap["sourceLatitude"], responseMap["sourceLongitude"]),
-              // DEST_LOCATION = LatLng(_destLatitude,_destLongitude);
-
+              DEST_LOCATION =
+                  LatLng(responseMap["destinationLatitude"], responseMap["destinationLongitude"]),
               setSourceAndDestinationIcons(),
               _createPolylines(SOURCE_LOCATION.latitude, SOURCE_LOCATION.longitude,
                   DRIVER_LOCATION.latitude, DRIVER_LOCATION.longitude),
@@ -112,7 +156,7 @@ class _ShowNormalUserMapState extends State<ShowNormalUserMap> {
     double destinationLatitude,
     double destinationLongitude,
   ) async {
-    polylinePoints = PolylinePoints();
+    PolylinePoints polylinePoints=new PolylinePoints();
 
     // Generating the list of coordinates to be used for
     // drawing the polylines
@@ -135,7 +179,7 @@ class _ShowNormalUserMapState extends State<ShowNormalUserMap> {
     }
 
     // Defining an ID
-    PolylineId id = PolylineId('poly');
+    PolylineId id = PolylineId('poly' + Random().nextInt(1000).toString());
 
     Polyline polyline = Polyline(
       polylineId: id,
@@ -154,6 +198,7 @@ class _ShowNormalUserMapState extends State<ShowNormalUserMap> {
     // );
 
     // Adding the polyline to the map
+    polylines.clear();
     setState(() {
       polylines[id] = polyline;
       load = false;
@@ -164,6 +209,10 @@ class _ShowNormalUserMapState extends State<ShowNormalUserMap> {
 
   @override
   Widget build(BuildContext context) {
+    if(load==true) {
+      polylines = {};
+    }
+
     return load
         ? spinkit
         : SizedBox(
@@ -184,7 +233,6 @@ class _ShowNormalUserMapState extends State<ShowNormalUserMap> {
                   },
                   markers: _markers,
                 ),
-/*
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: Padding(
@@ -200,12 +248,11 @@ class _ShowNormalUserMapState extends State<ShowNormalUserMap> {
                         ),
                         height: 200,
                         width: MediaQuery.of(context).size.width,
-                        child: Text("data"),
+                        child: _showTripDetails(),
                       ),
                     ),
                   ),
                 )
-*/
               ],
             ),
           );
@@ -222,12 +269,136 @@ class _ShowNormalUserMapState extends State<ShowNormalUserMap> {
   }
 
   void setMapPins() {
+    _markers = {};
     setState(() {
       _markers.add(
           Marker(markerId: MarkerId("sourcePin"), position: SOURCE_LOCATION, icon: sourceIcon));
       // destination pin
-      _markers
-          .add(Marker(markerId: MarkerId("driverPin"), position: DRIVER_LOCATION, icon: driverIcon));
+      if (responseMap['status'] == 'Booked')
+        _markers.add(
+            Marker(markerId: MarkerId("driverPin"), position: DRIVER_LOCATION, icon: driverIcon));
+
+      if (responseMap['status'] == 'Riding')
+        _markers.add(Marker(
+            markerId: MarkerId("driverPin"), position: DEST_LOCATION, icon: destinationIcon));
     });
+  }
+
+  _showTripDetails() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          // Container(
+          //   child: OtpTextField(
+          //     readOnly: true,
+          //     textStyle: GoogleFonts.workSans(fontSize: 15, color: Colors.white),
+          //     numberOfFields: 4,
+          //     borderColor: Colors.grey,
+          //     focusedBorderColor: Colors.grey,
+          //     cursorColor: Colors.white,
+          //     showFieldAsBox: true,
+          //     fieldWidth: MediaQuery.of(context).size.width / 12,
+          //     borderWidth: 1.0,
+          //
+          //   ),
+          // ),
+
+          responseMap['status'] == "Booked"
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      child: Text(
+                        "OTP",
+                        style: TextStyle(
+                            fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                    ),
+                    Container(
+                      height: 50,
+                      child: ListView.builder(
+                        itemBuilder: (BuildContext context, int pos) {
+                          return Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Container(
+                              height: 40,
+                              width: 40,
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  border: Border.all(color: Colors.grey)),
+                              child: Center(
+                                  child: Text(
+                                responseMap['otp'].toString().characters.elementAt(pos),
+                                style: TextStyle(
+                                    fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                              )),
+                            ),
+                          );
+                        },
+                        scrollDirection: Axis.horizontal,
+                        // physics: NeverScrollableScrollPhysics(),
+                        shrinkWrap: true,
+                        itemCount: 4,
+                      ),
+                    ),
+                  ],
+                )
+              : Container(),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                child: Text(
+                  "Amount to be paid",
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 10.0),
+                child: Text(
+                  responseMap['cost'].toString() + " ₹",
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+          StepProgressIndicator(
+            selectedSize: 60,
+            unselectedSize: 60,
+            totalSteps: 4,
+            currentStep: 1,
+            size: 36,
+            selectedColor: Colors.black,
+            unselectedColor: Colors.grey[200],
+            customStep: (index, color, _) => Container(
+              color: status.indexOf(responseMap['status']) >= index ? Colors.black : Colors.white,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Icon(
+                    status.indexOf(responseMap['status']) >= index ? Icons.check : Icons.remove,
+                    color: status.indexOf(responseMap['status']) >= index
+                        ? Colors.white
+                        : Colors.black,
+                  ),
+                  SizedBox(
+                    height: 5,
+                  ),
+                  Text(
+                    status[index],
+                    style: status.indexOf(responseMap['status']) >= index
+                        ? GoogleFonts.workSans(color: Colors.white)
+                        : GoogleFonts.workSans(color: Colors.black),
+                  )
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -141,8 +141,8 @@ class _BookingFormState extends State<BookingForm> {
       allowedExtensions: ['csv', 'xlsx'],
     );
     File file = File(result.files.single.path);
-    var encryptedBase64EncodedString=await file.readAsString(encoding:utf8);
-    print(encryptedBase64EncodedString);
+    // var encryptedBase64EncodedString=await file.readAsString(encoding:utf8);
+    // print(encryptedBase64EncodedString);
     // final input = file.openRead();
     // final fields = await input.transform(Utf8Decoder()).transform(new CsvToListConverter()).toList();
     // print(fields);
@@ -157,16 +157,23 @@ class _BookingFormState extends State<BookingForm> {
     // print('hell');
     // http.Response res=await http.Response.fromStream(response);
     // print(res.body);
-    // var uri = Uri.parse('https://csv-upload7676.herokuapp.com/upload');
-    // var request = http.MultipartRequest('POST', uri)
-    //   ..files.add(await http.MultipartFile.fromPath('file', file.path));
-    // var response = await request.send();
-    // // Utf8Decoder(
-    // print(response.headers);
-    // http.Response res=await http.Response.fromStream(response);
-    // print(res.statusCode);
-    // Uint8List u=latin1.encode(res.body);
-    // if (response.statusCode == 200) print('Uploaded!');
+    var uri = Uri.parse('https://csv-upload7676.herokuapp.com/upload');
+    var request = http.MultipartRequest('POST', uri)
+      ..files.add(await http.MultipartFile.fromPath('file', file.path));
+    var response = await request.send();
+    // Utf8Decoder(
+    print(response.headers);
+    http.Response res=await http.Response.fromStream(response);
+    print(res.statusCode);
+    print(res.body);
+
+    Uint8List u=latin1.encode(res.body);
+    if (response.statusCode == 200) {
+      setState(() {
+        _nameController[0].text=res.body;
+      });
+      print('Uploaded!');
+    };
 
   }
 
