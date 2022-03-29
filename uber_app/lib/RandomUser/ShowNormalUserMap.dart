@@ -31,7 +31,7 @@ class _ShowNormalUserMapState extends State<ShowNormalUserMap> {
   Map<dynamic, dynamic> responseMap;
   Map<PolylineId, Polyline> polylines = {};
   LatLng DEST_LOCATION, SOURCE_LOCATION, DRIVER_LOCATION;
-  String id = "a0926880-aea1-11ec-984c-4545ffd26017";
+  String id = "";
   bool load = true;
   List<LatLng> polylineCoordinates = [];
   DatabaseReference databaseReference = FirebaseDatabase.instance.ref().child('requestPool');
@@ -99,21 +99,21 @@ class _ShowNormalUserMapState extends State<ShowNormalUserMap> {
   Future<void> _getDataFromAdnroid() async {
     print("calling for data");
 
-    // String data;
-    // try {
-    //   final String result =
-    //       await platform.invokeMethod('test', {"data": ""}); //sending data from flutter here
-    //   data = result;
-    //   var idx = data.lastIndexOf('https://uber-hack12.herokuapp.com/');
-    //   var rideId = data.substring(34);
-    //   print(idx.toString() + " ID from SHOWMAP printing DART " + rideId);
-    //   print("from SHOWMAP printing DART" + data);
-    //   id = rideId;
-    //   // id="a0926880-aea1-11ec-984c-4545ffd26017";
-    // } on PlatformException catch (e) {
-    //   data = "Android is not responding please check the code";
-    //   print("from SHOWMAP printing DART" + data);
-    // }
+    String data;
+    try {
+      final String result =
+          await platform.invokeMethod('test', {"data": ""}); //sending data from flutter here
+      data = result;
+      var idx = data.lastIndexOf('https://uber-hack12.herokuapp.com/');
+      var rideId = data.substring(34);
+      print(idx.toString() + " ID from SHOWMAP printing DART " + rideId);
+      print("from SHOWMAP printing DART" + data);
+      id = rideId;
+      // id="a0926880-aea1-11ec-984c-4545ffd26017";
+    } on PlatformException catch (e) {
+      data = "Android is not responding please check the code";
+      print("from SHOWMAP printing DART" + data);
+    }
     await getLatLongfromRequestPool();
     // setState(() {
     //   load=false;
