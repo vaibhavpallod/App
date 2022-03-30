@@ -266,12 +266,18 @@ class _ShowNormalUserMapState extends State<ShowNormalUserMap> {
   }
 
   void setSourceAndDestinationIcons() async {
+    // sourceIcon = await BitmapDescriptor.fromAssetImage(
+    //     ImageConfiguration(devicePixelRatio: 2.5), "images/marker_u.png");
+    // destinationIcon = await BitmapDescriptor.fromAssetImage(
+    //     ImageConfiguration(devicePixelRatio: 2.5), "images/marker_dest.png");
+    // driverIcon = await BitmapDescriptor.fromAssetImage(
+    //     ImageConfiguration(devicePixelRatio: 2.5), "images/marker_d.png");
     sourceIcon = await BitmapDescriptor.fromAssetImage(
-        ImageConfiguration(devicePixelRatio: 2.5), "images/marker_u.png");
+        ImageConfiguration(devicePixelRatio: 2.5), "images/marker_rider.png");
     destinationIcon = await BitmapDescriptor.fromAssetImage(
         ImageConfiguration(devicePixelRatio: 2.5), "images/marker_dest.png");
     driverIcon = await BitmapDescriptor.fromAssetImage(
-        ImageConfiguration(devicePixelRatio: 2.5), "images/marker_d.png");
+        ImageConfiguration(devicePixelRatio: 2.5), "images/marker_driver.png");
     setMapPins();
   }
 
@@ -280,9 +286,9 @@ class _ShowNormalUserMapState extends State<ShowNormalUserMap> {
     setState(() {
       if(responseMap['status']=='Booked'){
         _markers.add(
-            Marker(markerId: MarkerId("sourcePin"), position: DRIVER_LOCATION, icon: sourceIcon));
+            Marker(markerId: MarkerId("sourcePin"), position: DRIVER_LOCATION, icon: driverIcon));
         _markers.add(
-            Marker(markerId: MarkerId("destPin"), position: SOURCE_LOCATION, icon: destinationIcon));
+            Marker(markerId: MarkerId("destPin"), position: SOURCE_LOCATION, icon: sourceIcon));
       }else{
         _markers.add(
             Marker(markerId: MarkerId("sourcePin"), position: SOURCE_LOCATION, icon: sourceIcon));
