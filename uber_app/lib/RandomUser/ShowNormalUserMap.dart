@@ -8,6 +8,7 @@ import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:step_progress_indicator/step_progress_indicator.dart';
 
 import '../Utils.dart';
@@ -372,10 +373,24 @@ class _ShowNormalUserMapState extends State<ShowNormalUserMap> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                child: Text(
-                  "Amount to be paid",
-                  style: GoogleFonts.workSans(fontSize: 17, color: Colors.white),
-                ),
+                child: status.indexOf(responseMap['status']) == 1 ||
+                    status.indexOf(responseMap['status']) == 2
+                    ? status.indexOf(responseMap['status']) == 1
+                    ? Text(
+                  "ETA for Partner:- ${DateFormat.yMMMMd().add_jm().format(DateTime.fromMillisecondsSinceEpoch(responseMap['eta']))}",
+                  style: GoogleFonts.workSans(
+                      fontSize: 15, fontWeight: FontWeight.normal),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                )
+                    : Text(
+                  "ETA for Rider:- ${DateFormat.yMMMMd().add_jm().format(DateTime.fromMillisecondsSinceEpoch(responseMap['eta']))}",
+                  style: GoogleFonts.workSans(
+                      fontSize: 15, fontWeight: FontWeight.normal),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                )
+                    : Container(),
               ),
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 10.0),
