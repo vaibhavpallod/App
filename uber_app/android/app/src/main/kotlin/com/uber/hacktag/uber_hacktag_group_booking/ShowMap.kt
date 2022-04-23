@@ -45,10 +45,10 @@ class ShowMap : FlutterActivity() {
 //        val intent: Intent = getIntent()
 //        val action: String? = intent.getAction()
 //        val type: String? = intent.getType()
-        print("from SHOWMAP printing " + initialRoute.toString())
-        print("from SHOWMAP printing" + getDartEntrypointFunctionName().toString())
+        print("from SHOWMAP printing kt" + initialRoute.toString() + '\n')
+        print("from SHOWMAP printing kt" + getDartEntrypointFunctionName().toString()+ '\n')
         val data: Uri? = this.intent.data
-        print("from SHOWMAP printing " + data)
+        print("from SHOWMAP printing kt" + data+ '\n')
 //        channel = MethodChannel(getFlutterView(), "myChannel")
 
         val mc = MethodChannel(

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:carousel_slider/carousel_slider.dart';
@@ -6,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_branch_sdk/flutter_branch_sdk.dart';
 import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -18,8 +20,9 @@ import 'package:http/http.dart' as http;
 import 'package:location/location.dart';
 import 'package:slider_button/slider_button.dart';
 import 'package:uber_hacktag_group_booking/Driver/Requests.dart';
+import 'package:uber_hacktag_group_booking/Utils/Functions.dart';
 import 'package:uber_hacktag_group_booking/konstants/loaders.dart';
-import 'dart:convert';
+
 import '../Enter/login.dart';
 import '../Utils.dart';
 import '../konstants/Constansts.dart';
@@ -30,11 +33,14 @@ class DriverHomePage extends StatefulWidget {
 }
 
 class _DriverHomePageState extends State<DriverHomePage> {
+// bengaluru loc
+// 12.970279,77.594972
+
   Completer<GoogleMapController> _controller = Completer();
   Location currentLocation = Location();
   Set<Marker> _markers = {}, _currentMarker;
   bool load = true;
-  BitmapDescriptor sourceIcon,driverIcon=null;
+  BitmapDescriptor sourceIcon, driverIcon = null;
   BitmapDescriptor destinationIcon;
   PolylinePoints polylinePoints;
   List<LatLng> polylineCoordinates = [];
@@ -84,26 +90,37 @@ class _DriverHomePageState extends State<DriverHomePage> {
                 double destinationLongitude = element['sourceLongitude'];
                 // double driverLat = element['driverLatitude'];
                 // double driverLng = element['driverLongitude'];
-                double distanceInMeters = Geolocator.distanceBetween(location.latitude,
-                    location.longitude, destinationLatitude, destinationLongitude);
+                double distanceInMeters = Geolocator.distanceBetween(
+                    location.latitude, location.longitude, destinationLatitude, destinationLongitude);
                 // element['distance'] = distanceInMeters;
                 // var dist = (distanceInMeters / 1000);
                 var currentTime = DateTime.now().millisecondsSinceEpoch;
+                // 1648732500000
+                currentTime = 1648733280000;
+
                 print("print: " +
                     (currentTime)
                         .toString()); // Validation for requests based on TIme, distance & Status
                 print("print: " +
                     (distanceInMeters)
                         .toString()); // Validation for requests based on TIme, distance & Status
+
+
+                // ***validation of time
+
+                // ***currentTime >= element['scheduleTime'] &&
+
                 if (element['status'] == "Finding" &&
-                    currentTime >= element['scheduleTime'] &&
                     distanceInMeters <= 10000) {
+                  print('request added');
                   setState(() {
                     listOFRequests.add(element as Map);
                   });
+                } else if (distanceInMeters > 10000) {
+                  print('distance is more for ' + element['passengerName']);
                 }
               }),
-              print("print" + listOFRequests.toString()),
+              print("print " + listOFRequests.toString()),
               tempMap.forEach((key, value) {
                 if (!listOFRequests.contains(value)) {
                   print("print" + key);
@@ -134,10 +151,12 @@ class _DriverHomePageState extends State<DriverHomePage> {
     print(res.body);
     Map<String, dynamic> responseMap = json.decode(res.body)['location'];
     print(responseMap);
-    SOURCE_LOCATION = LatLng(responseMap['driverLatitude'], responseMap['driverLongitude']);
+    // if()
     if (status == 'Booked') {
       DEST_LOCATION = LatLng(responseMap['sourceLatitude'], responseMap['sourceLongitude']);
+      SOURCE_LOCATION = LatLng(responseMap['driverLatitude'], responseMap['driverLongitude']);
     } else {
+      SOURCE_LOCATION = LatLng(responseMap['sourceLatitude'], responseMap['sourceLongitude']);
       DEST_LOCATION =
           LatLng(responseMap['destinationLatitude'], responseMap['destinationLongitude']);
     }
@@ -169,7 +188,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
     double destinationLongitude,
   ) async {
     polylinePoints = PolylinePoints();
-    polylineCoordinates=[];
+    polylineCoordinates = [];
     // Generating the list of coordinates to be used for
     // drawing the polylines
     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
@@ -267,10 +286,10 @@ class _DriverHomePageState extends State<DriverHomePage> {
   }
 
   setSourceAndDestinationIcons() async {
-    if(status=='Booked') {
+    if (status == 'Booked') {
       sourceIcon = await BitmapDescriptor.fromAssetImage(
           ImageConfiguration(devicePixelRatio: 2.5), "images/marker_rider.png");
-    } else{
+    } else {
       sourceIcon = driverIcon;
       // await BitmapDescriptor.fromAssetImage(
       //     ImageConfiguration(devicePixelRatio: 2.5,size: Size(100,100)), "images/marker_driver.png");
@@ -279,19 +298,18 @@ class _DriverHomePageState extends State<DriverHomePage> {
     destinationIcon = await BitmapDescriptor.fromAssetImage(
         ImageConfiguration(devicePixelRatio: 2.5), "images/marker_dest.png");
 
-
     setMapPins();
   }
 
   void setMapPins() {
     _markers = {};
     setState(() {
-      if(status=='Booked'){
+      if (status == 'Booked') {
         _markers.add(
             Marker(markerId: MarkerId("sourcePin"), position: DEST_LOCATION, icon: sourceIcon));
-        _markers.add(
-            Marker(markerId: MarkerId("destPin"), position: SOURCE_LOCATION, icon: destinationIcon));
-      }else{
+        _markers.add(Marker(
+            markerId: MarkerId("destPin"), position: SOURCE_LOCATION, icon: destinationIcon));
+      } else {
         _markers.add(
             Marker(markerId: MarkerId("sourcePin"), position: SOURCE_LOCATION, icon: sourceIcon));
         _markers.add(
@@ -303,16 +321,19 @@ class _DriverHomePageState extends State<DriverHomePage> {
 
   getDriverLocation() async {
     location = await currentLocation.getLocation();
-    if(driverIcon==null)
-    driverIcon = await BitmapDescriptor.fromAssetImage(
-        ImageConfiguration(devicePixelRatio: 2.5), "images/marker_driver.png");
+    // 12.970279,77.594972
+    // location.latitude=12.970279;
+    // location.longitude = 77.594972;
+    if (driverIcon == null)
+      driverIcon = await BitmapDescriptor.fromAssetImage(
+          ImageConfiguration(devicePixelRatio: 2.5), "images/marker_driver.png");
     String uid = FirebaseAuth.instance.currentUser.uid;
     DatabaseReference driverRef = FirebaseDatabase.instance.ref().child('drivers').child(uid);
     DatabaseReference dr = driverRef.child('activeRide');
     DataSnapshot ds = await dr.get();
 
     bool statusPresent = ds.exists;
-    print(statusPresent);
+    print('statusPresent'+statusPresent.toString());
     if (!statusPresent)
       await getRequests();
     else {
@@ -330,11 +351,13 @@ class _DriverHomePageState extends State<DriverHomePage> {
     // });
     currentLocation.onLocationChanged.listen((LocationData loc) {
       // _currentMarker = {};
+
       location = loc;
+      //12.970279, 77.594972
       _markers.add(Marker(
-          icon:driverIcon,
+          icon: driverIcon,
           markerId: MarkerId('Home'),
-          position: LatLng(loc.latitude ?? 0.0, loc.longitude ?? 0.0)));
+          position: LatLng(location.latitude ?? 0.0, location.longitude ?? 0.0)));
       print(loc.latitude.toString() + "," + loc.longitude.toString());
       // print();
       // if (mounted)
@@ -693,11 +716,10 @@ class _DriverHomePageState extends State<DriverHomePage> {
                     size: 26,
                   ),
                   onTap: () async {
-                  await storage.deleteAll();
+                    await storage.deleteAll();
                     Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(
-                        builder: (BuildContext context) => Login()),
+                        context,
+                        MaterialPageRoute(builder: (BuildContext context) => Login()),
                         (route) => false);
                   },
                 ),
@@ -712,35 +734,35 @@ class _DriverHomePageState extends State<DriverHomePage> {
                 ),
                 actions: <Widget>[
                   Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child:  Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: FlutterSwitch(
-                          height: 30.0,
-                          width: 45.0,
-                          // padding: 4.0,
-                          toggleSize: 20.0,
-                          borderRadius: 20.0,
-                          activeColor: Colors.black87,
-                          value: _switchValue,
-                          onToggle: (value) {
-                            setState(() {
-                              _switchValue = value;
-                            });
-                          },
-                        ),
+                      child: FlutterSwitch(
+                        height: 30.0,
+                        width: 45.0,
+                        // padding: 4.0,
+                        toggleSize: 20.0,
+                        borderRadius: 20.0,
+                        activeColor: Colors.black87,
+                        value: _switchValue,
+                        onToggle: (value) {
+                          setState(() {
+                            _switchValue = value;
+                          });
+                        },
                       ),
-                      // IconButton(
-                      //   icon: Icon(Icons.exit_to_app),
-                      //   color: Colors.black,
-                      //   onPressed: () async {
-                      //     await storage.deleteAll();
-                      //     Navigator.pushAndRemoveUntil(
-                      //         context,
-                      //         MaterialPageRoute(builder: (BuildContext context) => Login()),
-                      //         (route) => false);
-                      //   },
-                      // ),
+                    ),
+                    // IconButton(
+                    //   icon: Icon(Icons.exit_to_app),
+                    //   color: Colors.black,
+                    //   onPressed: () async {
+                    //     await storage.deleteAll();
+                    //     Navigator.pushAndRemoveUntil(
+                    //         context,
+                    //         MaterialPageRoute(builder: (BuildContext context) => Login()),
+                    //         (route) => false);
+                    //   },
+                    // ),
                   ),
                 ],
               ),
@@ -789,11 +811,17 @@ class _DriverHomePageState extends State<DriverHomePage> {
     int otp = generateOTP();
     temprequest['otp'] = otp;
     var email = request['passengerEmail'];
+    Branch_Functions branch_functions = new Branch_Functions();
+    BranchResponse response = await branch_functions.generateDeepLink(temprequest['uid'],
+        request['passengerEmail'], temprequest['cost'].toString(), requestKey);
+    print('branchresponse' + response.result.toString() + "set driver loc " + location.latitude.toString());
+    String link = response.result;
     setState(() {
       load = true;
     });
-    int timeAdd = ((Geolocator.distanceBetween(location.latitude, location.longitude,
-                    temprequest['sourceLatitude'], temprequest['sourceLongitude']) /
+
+    int timeAdd = ((Geolocator.distanceBetween(location.latitude, location.longitude, temprequest['sourceLatitude'],
+                    temprequest['sourceLongitude']) /
                 1000) *
             1.5)
         .ceil();
@@ -807,7 +835,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
                     temprequest['id'] = requestKey,
                     driverRef.child('activeRide').set(temprequest).whenComplete(() async {
                       var res = await http.get(Uri.parse(
-                          "https://us-central1-uber-hacktag-group-booking.cloudfunctions.net/sendMail?dest=$email&uid=$requestKey&otp=$otp"));
+                          "https://us-central1-uber-hacktag-group-booking.cloudfunctions.net/sendMail?dest=$email&uid=$requestKey&otp=$link"));
                       print(res.body);
                       await getDriverLocation();
                       setState(() {

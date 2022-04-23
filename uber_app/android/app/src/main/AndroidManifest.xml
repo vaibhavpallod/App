@@ -15,7 +15,7 @@
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:exported="true"
             android:hardwareAccelerated="true"
-            android:launchMode="singleTop"
+            android:launchMode="singleTask"
             android:theme="@style/LaunchTheme"
             android:windowSoftInputMode="adjustResize">
             <!-- Specifies an Android theme to apply to this Activity as soon as
@@ -26,41 +26,102 @@
                 android:name="io.flutter.embedding.android.NormalTheme"
                 android:resource="@style/NormalTheme" />
             <!--            android:label="@string/filter_title_view_app_from_web" -->
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter>
+                <data android:scheme="hometestapp" android:host="open" />
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+            </intent-filter>
+
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="hometest.test-app.link" />
+                <data android:scheme="https" android:host="hometest-alternate.test-app.link" />
+                <data android:scheme="https" android:host="hometest.app.link" />
+                <data android:scheme="https" android:host="hometest-alternate.app.link" />
+            </intent-filter>
+
+<!--
+            <intent-filter>
+                <data android:scheme="hometestapp" android:host="open" />
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+            </intent-filter>
+-->
+<!--
+
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="hometest.app.link" />
+                <data android:scheme="https" android:host="hometest-alternate.app.link" />
+            </intent-filter>
+-->
+
         </activity>
 
+<!--
 
         <activity
             android:name=".ShowMap"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:exported="true"
             android:hardwareAccelerated="true"
-            android:launchMode="singleTop"
+            android:launchMode="singleTask"
             android:theme="@style/LaunchTheme"
             android:windowSoftInputMode="adjustResize"
 
             >
 
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
+            &lt;!&ndash;
+                        <intent-filter>
+                            <action android:name="android.intent.action.VIEW" />
 
+                            <category android:name="android.intent.category.DEFAULT" />
+                            <category android:name="android.intent.category.BROWSABLE" />
+                            &lt;!&ndash; Accepts URIs that begin with "http://example.com" &ndash;&gt;
+
+                            <data
+                                android:host="uber-hack12.herokuapp.com"
+                                android:scheme="https" />
+
+
+                            &lt;!&ndash;                <data&ndash;&gt;
+                            &lt;!&ndash;                    android:host="uber-hack12.herokuapp.com"&ndash;&gt;
+                            &lt;!&ndash;                    android:scheme="http" />&ndash;&gt;
+                        </intent-filter>&ndash;&gt;
+
+
+            <intent-filter>
+                <data android:scheme="https" android:host="hometestapp" />
+                <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <!-- Accepts URIs that begin with "http://example.com" -->
-
-                <data
-                    android:host="uber-hack12.herokuapp.com"
-                    android:scheme="https" />
-                <!--                <data-->
-                <!--                    android:host="uber-hack12.herokuapp.com"-->
-                <!--                    android:scheme="http" />-->
             </intent-filter>
 
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="hometest.test-app.link" />
+                <data android:scheme="https" android:host="hometest-alternate.test-app.link" />
+            </intent-filter>
+
+
         </activity>
+-->
+<!-- key_live_fmWRB443XViP8BKEdgoPDfbdEtcaBqV1 -->
+        <meta-data android:name="io.branch.sdk.BranchKey" android:value="key_live_fmWRB443XViP8BKEdgoPDfbdEtcaBqV1" />
+        <meta-data android:name="io.branch.sdk.BranchKey.test" android:value="key_test_paXNs54YYGdGWqStkfoUVadkzzhlqs8g" />
+        <meta-data android:name="io.branch.sdk.TestMode" android:value="false" />
 
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

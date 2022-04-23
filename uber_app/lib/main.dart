@@ -1,12 +1,17 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 // import 'firebase_data';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_branch_sdk/flutter_branch_sdk.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:uber_hacktag_group_booking/Driver/DriverHomePage.dart';
 import 'package:uber_hacktag_group_booking/Driver/Requests.dart';
+import 'package:uber_hacktag_group_booking/RandomUser/ShowNormalUserMap.dart';
 import 'package:uber_hacktag_group_booking/pages/MainHomePage.dart';
 
 import 'Enter/login.dart';
@@ -15,6 +20,7 @@ import 'konstants/loaders.dart';
 import 'konstants/size_config.dart';
 
 void main() {
+  print('main man');
   runApp(MyApp());
 }
 
@@ -37,6 +43,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -46,18 +53,62 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class App extends StatelessWidget {
-  // Create the initialization Future outside of `build`:
+class App extends StatefulWidget {
+  @override
+  State<App> createState() => _AppState();
+}
 
+class _AppState extends State<App> {
+  // Create the initialization Future outside of `build`:
   final storage = FlutterSecureStorage();
 
   Future initialise(BuildContext context) async {
     print('initializing');
     await Firebase.initializeApp();
+    FlutterBranchSdk.validateSDKIntegration();
+
     // CollectionReference userCol =
     //     FirebaseFirestore.instance.collection('allusers');
     DatabaseReference allUsersDatabaseReference = FirebaseDatabase.instance.ref().child('allusers');
 
+    StreamSubscription<Map> streamSubscriptionDeepLink =
+        FlutterBranchSdk.initSession().listen((data) {
+      Map tempmap = data;
+      print(
+          'STREAM from MAIN inside listen ' + data.containsKey('+clicked_branch_link').toString());
+      if (data.containsKey('+clicked_branch_link') && data['+clicked_branch_link'] == true) {
+        if (data.containsKey('is_first_session')) {
+          print('from main is_first_session ' + data['is_first_session']);
+        }
+        String idstring = tempmap.containsKey('rideID') ? data['rideID'].toString() : "null";
+        String bookieUID = data['bookieUID'].toString();
+        print(" STREAM from MAIN printing DART ID " + data['rideID']);
+        print(data.toString());
+        BranchUniversalObject buo = BranchUniversalObject(
+            canonicalIdentifier: 'flutter/branch/UBER_APP',
+            title: 'Flutter Branch UBER',
+            contentDescription: 'Flutter Branch Description',
+            keywords: ['Plugin', 'Branch', 'Flutter'],
+            publiclyIndex: true,
+            locallyIndex: true,
+            contentMetadata: BranchContentMetaData()
+              ..addCustomMetadata('rideID', data['rideID'])
+              ..addCustomMetadata('bookieUID', data['bookieUID'])
+              ..addCustomMetadata('bookieEmail', data['bookieEmail']));
+        FlutterBranchSdk.registerView(buo: buo);
+
+        Navigator.push(context,
+            MaterialPageRoute(builder: (context) => ShowNormalUserMap(idstring, bookieUID)));
+      }
+      print(" STREAM from MAIN printing out");
+    }, onError: (error) {
+      PlatformException platformException = error as PlatformException;
+      print(
+          'STREAM from MAIN printing DART InitSession error: ${platformException.code} - ${platformException.message}');
+    }, onDone: () {
+      print('from MAIN printing DART');
+    }, cancelOnError: false);
+    // await streamSubscriptionDeepLink.cancel();
     if (FirebaseAuth.instance.currentUser != null) {
       print('MAIN: current user id' + FirebaseAuth.instance.currentUser.uid);
       // DocumentSnapshot ds =
@@ -95,9 +146,17 @@ class App extends StatelessWidget {
   }
 
   @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+    print('from main dispose called');
+  }
+
+  @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Uber ',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(),
       home: Scaffold(
         body: Center(

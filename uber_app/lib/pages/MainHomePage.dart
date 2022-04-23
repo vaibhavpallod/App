@@ -171,7 +171,7 @@ class _MainHomePageState extends State<MainHomePage> {
                                   child: NumberPicker(
                                     haptics: true,
                                     value: noc,
-                                    maxValue: 11,
+                                    maxValue: 50,
                                     minValue: 2,
                                     axis: Axis.horizontal,
                                     itemWidth: 50,

@@ -144,6 +144,15 @@ class _ShowStatusState extends State<ShowStatus> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
+                        "Passenger Name:- ${data[pos]['passengerName']}",
+                        style: GoogleFonts.workSans(fontSize: 16, fontWeight: FontWeight.w400),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Text(
                         "Source:- ${data[pos]['source']}",
                         style: GoogleFonts.workSans(fontSize: 15, fontWeight: FontWeight.normal),
                         maxLines: 1,
@@ -165,14 +174,14 @@ class _ShowStatusState extends State<ShowStatus> {
                               status.indexOf(data[pos]['status']) == 2
                           ? status.indexOf(data[pos]['status']) == 1
                               ? Text(
-                                  "ETA for Partner:- ${DateFormat.yMMMMd().add_jm().format(DateTime.fromMillisecondsSinceEpoch(data[pos]['eta']))}",
+                                  "ETA for Partner:- ${DateFormat.yMMMMd().add_jm().format(DateTime.fromMillisecondsSinceEpoch(data[pos]['eta']).add(Duration(hours: 19,minutes: 30)))}",
                                   style: GoogleFonts.workSans(
                                       fontSize: 15, fontWeight: FontWeight.normal),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 )
                               : Text(
-                                  "ETA for Rider:- ${DateFormat.yMMMMd().add_jm().format(DateTime.fromMillisecondsSinceEpoch(data[pos]['eta']))}",
+                                  "ETA for Rider:- ${DateFormat.yMMMMd().add_jm().format(DateTime.fromMillisecondsSinceEpoch(data[pos]['eta']).add(Duration(hours: 19,minutes: 30)))}",
                                   style: GoogleFonts.workSans(
                                       fontSize: 15, fontWeight: FontWeight.normal),
                                   maxLines: 1,
